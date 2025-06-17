@@ -183,8 +183,10 @@ router.get('/files/:filename', async (req, res) => {
         res.setHeader('Cache-Control', 'public, max-age=31536000');
         res.setHeader('Access-Control-Allow-Origin', '*');
 
-        // Stream the file
+        // Use regular fs.createReadStream for streaming
         const fileStream = fs.createReadStream(filePath);
+        
+        // Handle stream errors
         fileStream.on('error', error => {
             console.error('Stream error:', error);
             if (!res.headersSent) {
@@ -192,7 +194,9 @@ router.get('/files/:filename', async (req, res) => {
             }
         });
 
+        // Pipe the file to response
         fileStream.pipe(res);
+
     } catch (error) {
         console.error('File serving error:', error);
         if (!res.headersSent) {
