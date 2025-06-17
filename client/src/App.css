@@ -1348,3 +1348,46 @@ body {
 [data-theme='dark'] .file-info {
     color: var(--text-primary);
 }
+
+.file-viewer-modal .modal-content {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.file-preview-image {
+    max-width: 100%;
+    max-height: 70vh;
+    display: block;
+    margin: 0 auto;
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.error-container {
+    text-align: center;
+    padding: 2rem;
+}
+
+.error-message {
+    color: #dc3545;
+    margin-bottom: 1rem;
+}
+
+.file-info {
+    text-align: center;
+    padding: 2rem;
+}
+
+.close-button {
+    padding: 0.25rem 0.5rem;
+}
+
+[data-theme='dark'] .file-viewer-modal .modal-content {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}

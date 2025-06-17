@@ -140,37 +140,61 @@ router.delete('/:noteId/files/:fileId', async (req, res) => {
 router.get('/files/:filename', async (req, res) => {
     try {
         const filename = req.params.filename;
-        const filePath = path.join(__dirname, '..', 'uploads', filename);
-        
+         // Use absolute path for uploads directory
+        const uploadsDir = path.join(process.cwd(), 'uploads');
+        const filePath = path.join(uploadsDir, filename);
+
+        // Ensure uploads directory exists
+        try {
+            await fs.access(uploadsDir);
+        } catch {
+            await fs.mkdir(uploadsDir, { recursive: true });
+        }
+
         // Check if file exists
         try {
             await fs.access(filePath);
-        } catch (error) {
+        } catch {
+            console.error(`File not found: ${filePath}`);
             return res.status(404).json({ message: 'File not found' });
         }
 
-        // Set proper content type based on file extension
+        // Get file stats
+        const stats = await fs.stat(filePath);
+        if (!stats.isFile()) {
+            return res.status(404).json({ message: 'Not a file' });
+        }
+
+        // Set appropriate headers
         const ext = path.extname(filename).toLowerCase();
-        const contentTypes = {
+        const mimeTypes = {
             '.png': 'image/png',
             '.jpg': 'image/jpeg',
             '.jpeg': 'image/jpeg',
             '.gif': 'image/gif',
             '.pdf': 'application/pdf',
+            '.txt': 'text/plain',
             '.doc': 'application/msword',
             '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         };
 
-        res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
+        res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+        res.setHeader('Content-Length', stats.size);
         res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
         res.setHeader('Access-Control-Allow-Origin', '*');
 
         // Stream the file
-        const stream = fs.createReadStream(filePath);
-        stream.pipe(res);
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.on('error', error => {
+            console.error('Stream error:', error);
+            res.status(500).json({ message: 'Error streaming file' });
+        });
+
+        fileStream.pipe(res);
     } catch (error) {
         console.error('File serving error:', error);
-        res.status(500).json({ message: 'Error serving file' });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
