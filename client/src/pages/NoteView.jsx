@@ -33,7 +33,7 @@ const NoteView = ({ noteId: propNoteId, onBack }) => {
       }
 
       try {
-        const response = await axios.get(`http://localhost:5000/api/notes/${id}`);
+        const response = await axios.get(`https://notes-cw4m.onrender.com/api/notes/${id}`);
         if (response.data) {
           setNote(response.data);
           setEditedNote(response.data);
@@ -58,7 +58,7 @@ const NoteView = ({ noteId: propNoteId, onBack }) => {
 
   const handleSave = async () => {
     try {
-      const response = await axios.put(`http://localhost:5000/api/notes/${id}`, editedNote);
+      const response = await axios.put(`https://notes-cw4m.onrender.com/api/notes/${id}`, editedNote);
       setNote(response.data);
       setIsEditing(false);
     } catch (error) {
@@ -74,7 +74,7 @@ const NoteView = ({ noteId: propNoteId, onBack }) => {
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
       try {
-        await axios.delete(`http://localhost:5000/api/notes/${id}`);
+        await axios.delete(`https://notes-cw4m.onrender.com/api/notes/${id}`);
         navigate('/');
       } catch (error) {
         console.error('Error deleting note:', error);
@@ -102,7 +102,7 @@ const NoteView = ({ noteId: propNoteId, onBack }) => {
 
       try {
         const response = await axios.post(
-          `http://localhost:5000/api/notes/${id}/upload`,
+          `https://notes-cw4m.onrender.com/api/notes/${id}/upload`,
           formData,
           {
             headers: { 'Content-Type': 'multipart/form-data' },
@@ -133,7 +133,7 @@ const NoteView = ({ noteId: propNoteId, onBack }) => {
 
   const handleRemoveFile = async (fileId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/notes/${id}/files/${fileId}`);
+      await axios.delete(`https://notes-cw4m.onrender.com/api/notes/${id}/files/${fileId}`);
       setEditedNote(prev => ({
         ...prev,
         mediaFiles: prev.mediaFiles.filter(file => file._id !== fileId)
@@ -145,7 +145,7 @@ const NoteView = ({ noteId: propNoteId, onBack }) => {
 
   const handleFileDelete = async (fileId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/notes/${note._id}/files/${fileId}`);
+      await axios.delete(`https://notes-cw4m.onrender.com/api/notes/${note._id}/files/${fileId}`);
       setNote(prev => ({
         ...prev,
         mediaFiles: prev.mediaFiles.filter(file => file._id !== fileId)
@@ -202,7 +202,7 @@ const NoteView = ({ noteId: propNoteId, onBack }) => {
           <>
             {file.type.startsWith('image/') ? (
               <img
-                src={`http://localhost:5000/${file.path}`}
+                src={`https://notes-cw4m.onrender.com/${file.path}`}
                 alt={file.filename}
                 className="preview-thumbnail"
               />

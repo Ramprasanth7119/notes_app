@@ -26,7 +26,7 @@ const AttachmentPreview = ({ file, onDelete, isEditing }) => {
         >
           {file.type.startsWith('image/') ? (
             <img
-              src={`http://localhost:5000/${file.path}`}
+              src={`https://notes-cw4m.onrender.com/${file.path}`}
               alt={file.filename}
               className="preview-thumbnail"
             />

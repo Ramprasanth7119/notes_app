@@ -25,7 +25,7 @@ const Home = () => {
 
   const fetchNotes = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/notes');
+      const response = await axios.get('https://notes-cw4m.onrender.com/api/notes');
       const sortedNotes = response.data.data.sort((a, b) => {
         if (a.pinned === b.pinned) return new Date(b.date) - new Date(a.date);
         return a.pinned ? -1 : 1;

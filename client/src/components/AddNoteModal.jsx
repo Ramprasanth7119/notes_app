@@ -21,7 +21,7 @@ const AddNoteModal = ({ show, handleClose, refreshNotes }) => {
         date: today.toISOString().split('T')[0],
         month: today.toLocaleString('default', { month: 'long' })
       };
-      await axios.post('http://localhost:5000/api/notes', payload);
+      await axios.post('https://notes-cw4m.onrender.com/api/notes', payload);
       refreshNotes();
       handleClose();
       setFormData({ title: '', content: '', tags: [] });

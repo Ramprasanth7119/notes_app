@@ -42,7 +42,7 @@ const Statistics = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/notes/stats');
+      const response = await axios.get('https://notes-cw4m.onrender.com/api/notes/stats');
       setStats(response.data);
       setLoading(false);
     } catch (error) {

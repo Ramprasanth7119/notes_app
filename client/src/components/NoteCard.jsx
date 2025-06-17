@@ -22,7 +22,7 @@ const NoteCard = ({ note, onDeleteNote }) => {
     e.stopPropagation(); // Prevent card click
     if (window.confirm('Are you sure you want to delete this note?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/notes/${note._id}`);
+        await axios.delete(`https://notes-cw4m.onrender.com/api/notes/${note._id}`);
         onDeleteNote(note._id);
       } catch (error) {
         console.error('Error deleting note:', error);

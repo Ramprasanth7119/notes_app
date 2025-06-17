@@ -49,7 +49,7 @@ const FileViewer = ({ file, onClose }) => {
               style={{ transform: `scale(${zoom})` }}
             >
               <img
-                src={`http://localhost:5000/${file.path}`}
+                src={`https://notes-cw4m.onrender.com/${file.path}`}
                 alt={file.filename}
                 className="preview-image"
               />
@@ -59,7 +59,7 @@ const FileViewer = ({ file, onClose }) => {
       case 'pdf':
         return (
           <iframe
-            src={`http://localhost:5000/${file.path}`}
+            src={`https://notes-cw4m.onrender.com/${file.path}`}
             title={file.filename}
             className="pdf-viewer"
           />
@@ -70,7 +70,7 @@ const FileViewer = ({ file, onClose }) => {
             <p>Preview not available for this file type</p>
             <Button 
               variant="primary"
-              href={`http://localhost:5000/${file.path}`}
+              href={`https://notes-cw4m.onrender.com/${file.path}`}
               download
             >
               <BsDownload /> Download File

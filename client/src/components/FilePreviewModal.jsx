@@ -24,7 +24,7 @@ const FilePreviewModal = ({ show, onHide, file }) => {
           </div>
           <div className="image-container" style={{ transform: `scale(${zoom})` }}>
             <img
-              src={`http://localhost:5000/${file.path}`}
+              src={`https://notes-cw4m.onrender.com/${file.path}`}
               alt={file.filename}
               className="preview-image"
             />
@@ -36,7 +36,7 @@ const FilePreviewModal = ({ show, onHide, file }) => {
     return (
       <div className="preview-container">
         <iframe
-          src={`http://localhost:5000/${file.path}`}
+          src={`https://notes-cw4m.onrender.com/${file.path}`}
           title="File preview"
           className="preview-frame"
         />
@@ -50,7 +50,7 @@ const FilePreviewModal = ({ show, onHide, file }) => {
         <Modal.Title>{file?.filename}</Modal.Title>
         <Button
           variant="primary"
-          href={`http://localhost:5000/${file?.path}`}
+          href={`https://notes-cw4m.onrender.com/${file?.path}`}
           download
           className="ms-auto me-2"
         >

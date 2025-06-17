@@ -16,7 +16,7 @@ const EditNote = () => {
   useEffect(() => {
     const fetchNote = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/notes/${id}`);
+        const response = await axios.get(`https://notes-cw4m.onrender.com/api/notes/${id}`);
         const noteData = response.data;
         setNote(noteData);
         setFormData({
@@ -34,7 +34,7 @@ const EditNote = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/notes/${id}`, formData);
+      await axios.put(`https://notes-cw4m.onrender.com/api/notes/${id}`, formData);
       navigate(`/notes/${note.date}`);
     } catch (error) {
       console.error('Error updating note:', error);

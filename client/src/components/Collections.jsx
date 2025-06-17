@@ -24,7 +24,7 @@ const Collections = () => {
 
   const fetchCollections = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/collections');
+      const response = await axios.get('https://notes-cw4m.onrender.com/api/collections');
       setCollections(response.data);
     } catch (error) {
       console.error('Error fetching collections:', error);
@@ -33,7 +33,7 @@ const Collections = () => {
 
   const fetchNotesForCollection = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/notes');
+      const response = await axios.get('https://notes-cw4m.onrender.com/api/notes');
       setAllNotes(response.data.data);
     } catch (error) {
       console.error('Error fetching notes:', error);
@@ -43,7 +43,7 @@ const Collections = () => {
   const handleCreateCollection = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/collections', newCollection);
+      await axios.post('https://notes-cw4m.onrender.com/api/collections', newCollection);
       setShowNewModal(false);
       setNewCollection({ name: '', description: '' });
       fetchCollections();
@@ -54,7 +54,7 @@ const Collections = () => {
 
   const handleAddNoteToCollection = async (noteId) => {
     try {
-      await axios.post(`http://localhost:5000/api/collections/${selectedCollection._id}/notes`, {
+      await axios.post(`https://notes-cw4m.onrender.com/api/collections/${selectedCollection._id}/notes`, {
         noteId
       });
       

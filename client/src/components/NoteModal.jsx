@@ -27,7 +27,7 @@ const NoteModal = ({ show, handleClose, handleSubmit, formData, setFormData, edi
 
       try {
         const response = await axios.post(
-          `http://localhost:5000/api/notes/${editingNoteId}/upload`,
+          `https://notes-cw4m.onrender.com/api/notes/${editingNoteId}/upload`,
           formData,
           {
             onUploadProgress: (progressEvent) => {
@@ -70,7 +70,7 @@ const NoteModal = ({ show, handleClose, handleSubmit, formData, setFormData, edi
           <>
             {file.type.startsWith('image/') ? (
               <img 
-                src={`http://localhost:5000/${file.path}`} 
+                src={`https://notes-cw4m.onrender.com/${file.path}`} 
                 alt={file.filename} 
                 className="preview-image"
               />
