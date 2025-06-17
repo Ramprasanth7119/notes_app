@@ -1,24 +1,31 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const dbconn = require('./config/db');
-const noteRoutes = require('./routes/NoteRouter');
+const path = require('path');
 require('dotenv').config();
 
+const noteRoutes = require('./routes/noteRoutes');
+const collectionRoutes = require('./routes/collectionRoutes');
+
 const app = express();
-const PORT = process.env.PORT || 5000;
-
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Ensure uploads directory exists
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Routes 
 app.use('/api/notes', noteRoutes);
+app.use('/api/collections', collectionRoutes);
 
-app.get('/', (req, res) => {
-  res.send('Welcome to the Notes App!');
-});
-
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Connect to DB and start server
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('Connected to MongoDB');
+    app.listen(5000, () => {
+      console.log('Server running on port 5000');
+    });
+  })
+  .catch((err) => console.log(err));

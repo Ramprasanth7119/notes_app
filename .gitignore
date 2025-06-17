@@ -1,0 +1,4 @@
+# ...existing entries...
+/server/uploads/*
+!server/uploads/.gitkeep
+node_modules/
