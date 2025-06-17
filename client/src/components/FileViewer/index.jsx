@@ -1,100 +1,127 @@
-import React, { useState } from 'react';
-import { Modal, Button } from 'react-bootstrap';
-import { 
-  BsDownload, 
-  BsZoomIn, 
-  BsZoomOut,
-  BsFullscreen,
-  BsFullscreenExit
-} from 'react-icons/bs';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Spinner } from 'react-bootstrap';
+import { Document, Page, pdfjs } from 'react-pdf';
+import { BsX, BsDownload, BsZoomIn, BsZoomOut } from 'react-icons/bs';
+import axios from 'axios';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const FileViewer = ({ file, onClose }) => {
-  const [zoom, setZoom] = useState(1);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [numPages, setNumPages] = useState(null);
+    const [pageNumber, setPageNumber] = useState(1);
+    const [zoom, setZoom] = useState(1);
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 3));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5));
+    const fileUrl = `https://notes-cw4m.onrender.com/api/notes/files/${file.path.split('/').pop()}`;
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
+    const handleDownload = async () => {
+        try {
+            const response = await axios.get(fileUrl, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', file.filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Download error:', error);
+            setError('Failed to download file');
+        }
+    };
 
-  const renderPreview = () => {
-    if (!file) return null;
+    const renderContent = () => {
+        if (error) {
+            return <div className="error-message">{error}</div>;
+        }
 
-    switch (file.type) {
-      case 'image':
-        return (
-          <div className="image-viewer">
-            <div className="controls">
-              <Button variant="light" onClick={handleZoomOut}>
-                <BsZoomOut />
-              </Button>
-              <span className="zoom-level">{Math.round(zoom * 100)}%</span>
-              <Button variant="light" onClick={handleZoomIn}>
-                <BsZoomIn />
-              </Button>
-              <Button variant="light" onClick={toggleFullscreen}>
-                {isFullscreen ? <BsFullscreenExit /> : <BsFullscreen />}
-              </Button>
-            </div>
-            <div 
-              className="image-container"
-              style={{ transform: `scale(${zoom})` }}
-            >
-              <img
-                src={`https://notes-cw4m.onrender.com/${file.path}`}
-                alt={file.filename}
-                className="preview-image"
-              />
-            </div>
-          </div>
-        );
-      case 'pdf':
-        return (
-          <iframe
-            src={`https://notes-cw4m.onrender.com/${file.path}`}
-            title={file.filename}
-            className="pdf-viewer"
-          />
-        );
-      default:
-        return (
-          <div className="unsupported-format">
-            <p>Preview not available for this file type</p>
-            <Button 
-              variant="primary"
-              href={`https://notes-cw4m.onrender.com/${file.path}`}
-              download
-            >
-              <BsDownload /> Download File
-            </Button>
-          </div>
-        );
-    }
-  };
+        if (file.type.startsWith('image/')) {
+            return (
+                <img
+                    src={fileUrl}
+                    alt={file.filename}
+                    className="img-preview"
+                    onLoad={() => setLoading(false)}
+                    onError={() => {
+                        setLoading(false);
+                        setError('Failed to load image');
+                    }}
+                />
+            );
+        }
 
-  return (
-    <Modal 
-      show={true} 
-      onHide={onClose}
-      size="xl"
-      className="file-viewer-modal"
-    >
-      <Modal.Header closeButton>
-        <Modal.Title>{file?.filename}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {renderPreview()}
-      </Modal.Body>
-    </Modal>
-  );
+        if (file.type === 'application/pdf') {
+            return (
+                <div className="pdf-container" style={{ transform: `scale(${zoom})` }}>
+                    <Document
+                        file={fileUrl}
+                        onLoadSuccess={({ numPages }) => {
+                            setNumPages(numPages);
+                            setLoading(false);
+                        }}
+                        onLoadError={(error) => {
+                            console.error('PDF load error:', error);
+                            setLoading(false);
+                            setError('Failed to load PDF');
+                        }}
+                        loading={<Spinner animation="border" />}
+                    >
+                        <Page pageNumber={pageNumber} />
+                    </Document>
+                </div>
+            );
+        }
+
+        return <div className="unsupported-file">This file type cannot be previewed</div>;
+    };
+
+    return (
+        <Modal show={true} onHide={onClose} size="lg" centered className="file-viewer-modal">
+            <Modal.Header>
+                <Modal.Title>{file.filename}</Modal.Title>
+                <div className="modal-actions">
+                    <Button
+                        variant="outline-primary"
+                        onClick={handleDownload}
+                        className="me-2"
+                    >
+                        <BsDownload /> Download
+                    </Button>
+                    {file.type === 'application/pdf' && (
+                        <div className="zoom-controls me-2">
+                            <Button
+                                variant="outline-secondary"
+                                onClick={() => setZoom(prev => Math.max(prev - 0.2, 0.5))}
+                            >
+                                <BsZoomOut />
+                            </Button>
+                            <Button
+                                variant="outline-secondary"
+                                onClick={() => setZoom(prev => Math.min(prev + 0.2, 2))}
+                            >
+                                <BsZoomIn />
+                            </Button>
+                        </div>
+                    )}
+                    <Button variant="outline-danger" onClick={onClose}>
+                        <BsX size={24} />
+                    </Button>
+                </div>
+            </Modal.Header>
+            <Modal.Body>
+                {loading && (
+                    <div className="loading-spinner">
+                        <Spinner animation="border" />
+                    </div>
+                )}
+                {renderContent()}
+            </Modal.Body>
+        </Modal>
+    );
 };
 
 export default FileViewer;

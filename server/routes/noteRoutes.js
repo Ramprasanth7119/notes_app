@@ -136,5 +136,42 @@ router.delete('/:noteId/files/:fileId', async (req, res) => {
     res.status(500).json({ message: 'Error deleting file' });
   }
 });
+// Add this route for serving files
+router.get('/files/:filename', async (req, res) => {
+    try {
+        const filename = req.params.filename;
+        const filePath = path.join(__dirname, '..', 'uploads', filename);
+        
+        // Check if file exists
+        try {
+            await fs.access(filePath);
+        } catch (error) {
+            return res.status(404).json({ message: 'File not found' });
+        }
+
+        // Set proper content type
+        const ext = path.extname(filename).toLowerCase();
+        const contentTypes = {
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.pdf': 'application/pdf',
+            '.doc': 'application/msword',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        };
+
+        const contentType = contentTypes[ext] || 'application/octet-stream';
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+        // Stream the file
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+    } catch (error) {
+        console.error('File serving error:', error);
+        res.status(500).json({ message: 'Error serving file' });
+    }
+});
 
 module.exports = router;

@@ -5,7 +5,8 @@ import { BsTrash } from 'react-icons/bs';
 import FileViewer from './FileViewer';
 
 const getFileUrl = (path) => {
-  const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  // const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const baseUrl = 'https://notes-cw4m.onrender.com';
   return `${baseUrl}/uploads${path}`;
 };
 
