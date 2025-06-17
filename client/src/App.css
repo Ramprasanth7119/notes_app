@@ -1391,3 +1391,44 @@ body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
 }
+
+.theme-toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    padding: 8px;
+}
+
+.theme-toggle-btn.light {
+    background-color: #f8fafc;
+    color: #2d3748;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.theme-toggle-btn.dark {
+    background-color: #2d3748;
+    color: #f8fafc;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle-btn:hover {
+    transform: translateY(-2px);
+}
+
+.theme-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle-btn:hover svg {
+    transform: rotate(45deg);
+}

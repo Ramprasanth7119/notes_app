@@ -137,29 +137,20 @@ router.delete('/:noteId/files/:fileId', async (req, res) => {
   }
 });
 // Add this route for serving files
-router.get('/files/:filename', async (req, res) => {
+router.get('/files/:filename', (req, res) => {
     try {
         const filename = req.params.filename;
-        const uploadsDir = path.join(process.cwd(), 'uploads');
+        const uploadsDir = path.resolve(process.cwd(), 'uploads');
         const filePath = path.join(uploadsDir, filename);
 
-        // Ensure uploads directory exists
-        try {
-            await fs.access(uploadsDir);
-        } catch {
-            await fs.mkdir(uploadsDir, { recursive: true });
-        }
-
-        // Check if file exists
-        try {
-            await fs.access(filePath);
-        } catch {
+        // Check if file exists synchronously
+        if (!fs.existsSync(filePath)) {
             console.log(`File not found: ${filePath}`);
             return res.status(404).json({ message: 'File not found' });
         }
 
-        // Get file stats
-        const stats = await fs.stat(filePath);
+        // Get file stats synchronously
+        const stats = fs.statSync(filePath);
         if (!stats.isFile()) {
             return res.status(404).json({ message: 'Not a file' });
         }
@@ -172,30 +163,22 @@ router.get('/files/:filename', async (req, res) => {
             '.jpeg': 'image/jpeg',
             '.gif': 'image/gif',
             '.pdf': 'application/pdf',
-            '.txt': 'text/plain',
-            '.doc': 'application/msword',
-            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            '.txt': 'text/plain'
         };
 
         res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
         res.setHeader('Content-Length', stats.size);
-        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-        res.setHeader('Cache-Control', 'public, max-age=31536000');
         res.setHeader('Access-Control-Allow-Origin', '*');
 
-        // Use regular fs.createReadStream for streaming
-        const fileStream = fs.createReadStream(filePath);
-        
-        // Handle stream errors
-        fileStream.on('error', error => {
-            console.error('Stream error:', error);
-            if (!res.headersSent) {
-                res.status(500).json({ message: 'Error streaming file' });
+        // Send file using res.sendFile
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error('Send file error:', err);
+                if (!res.headersSent) {
+                    res.status(500).json({ message: 'Error sending file' });
+                }
             }
         });
-
-        // Pipe the file to response
-        fileStream.pipe(res);
 
     } catch (error) {
         console.error('File serving error:', error);
