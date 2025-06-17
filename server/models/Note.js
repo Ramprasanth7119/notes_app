@@ -1,10 +1,17 @@
 const mongoose = require('mongoose');
 
 const mediaFileSchema = new mongoose.Schema({
-  filename: { type: String, required: true },
-  path: { type: String, required: true },
-  type: { type: String, required: true },
-  uploadDate: { type: Date, default: Date.now }
+  filename: String,
+  path: String,
+  type: String
+});
+
+mediaFileSchema.pre('save', function(next) {
+  // Convert absolute paths to relative paths
+  if (this.path && this.path.includes('uploads')) {
+    this.path = this.path.split('uploads')[1];
+  }
+  next();
 });
 
 const noteSchema = new mongoose.Schema({

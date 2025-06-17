@@ -6,41 +6,17 @@ const fs = require('fs').promises;
 const Note = require('../models/Note');
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+  destination: function(req, file, cb) {
+    const uploadPath = path.join(__dirname, '..', 'uploads');
+    cb(null, uploadPath);
   },
-  filename: (req, file, cb) => {
+  filename: function(req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
 
-const fileFilter = (req, file, cb) => {
-  // Accept images, PDFs, and common document formats
-  const allowedTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'text/plain'
-  ];
-  
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Unsupported file type'), false);
-  }
-};
-
-const upload = multer({ 
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
-});
+const upload = multer({ storage: storage });
 
 const {
   createNote,
@@ -136,21 +112,22 @@ router.delete('/:noteId/files/:fileId', async (req, res) => {
       return res.status(404).json({ message: 'Note not found' });
     }
 
-    // Find the file in the mediaFiles array
-    const fileIndex = note.mediaFiles.findIndex(
-      file => file._id.toString() === fileId
-    );
-
-    if (fileIndex === -1) {
+    const file = note.mediaFiles.find(f => f._id.toString() === fileId);
+    if (!file) {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    // Get file path and remove from filesystem
-    const filePath = path.join(__dirname, '..', note.mediaFiles[fileIndex].path);
-    await fs.unlink(filePath);
+    const filePath = path.join(__dirname, '..', file.path);
+    
+    try {
+      await fs.access(filePath);
+      await fs.unlink(filePath);
+    } catch (error) {
+      console.log(`File ${filePath} already deleted or not found`);
+    }
 
-    // Remove file from note's mediaFiles array
-    note.mediaFiles.splice(fileIndex, 1);
+    // Remove file from note's mediaFiles array regardless of physical file status
+    note.mediaFiles = note.mediaFiles.filter(f => f._id.toString() !== fileId);
     await note.save();
 
     res.status(200).json({ message: 'File deleted successfully' });

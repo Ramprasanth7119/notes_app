@@ -2,12 +2,24 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs').promises;
 require('dotenv').config();
 
 const noteRoutes = require('./routes/noteRoutes');
 const collectionRoutes = require('./routes/collectionRoutes');
 
 const app = express();
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+(async () => {
+  try {
+    await fs.access(uploadsDir);
+  } catch {
+    await fs.mkdir(uploadsDir, { recursive: true });
+  }
+})();
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -29,3 +41,12 @@ mongoose
     });
   })
   .catch((err) => console.log(err));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
