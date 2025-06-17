@@ -140,27 +140,27 @@ router.delete('/:noteId/files/:fileId', async (req, res) => {
 router.get('/files/:filename', async (req, res) => {
     try {
         const filename = req.params.filename;
-         // Use absolute path for uploads directory
+        // Use absolute path for uploads directory
         const uploadsDir = path.join(process.cwd(), 'uploads');
         const filePath = path.join(uploadsDir, filename);
 
         // Ensure uploads directory exists
         try {
-            await fs.access(uploadsDir);
+            await fsPromises.access(uploadsDir);
         } catch {
-            await fs.mkdir(uploadsDir, { recursive: true });
+            await fsPromises.mkdir(uploadsDir, { recursive: true });
         }
 
         // Check if file exists
         try {
-            await fs.access(filePath);
+            await fsPromises.access(filePath);
         } catch {
-            console.error(`File not found: ${filePath}`);
+            console.log(`File not found: ${filePath}`);
             return res.status(404).json({ message: 'File not found' });
         }
 
         // Get file stats
-        const stats = await fs.stat(filePath);
+        const stats = await fsPromises.stat(filePath);
         if (!stats.isFile()) {
             return res.status(404).json({ message: 'Not a file' });
         }
@@ -184,17 +184,21 @@ router.get('/files/:filename', async (req, res) => {
         res.setHeader('Cache-Control', 'public, max-age=31536000');
         res.setHeader('Access-Control-Allow-Origin', '*');
 
-        // Stream the file
+        // Use regular fs for streaming
         const fileStream = fs.createReadStream(filePath);
         fileStream.on('error', error => {
             console.error('Stream error:', error);
-            res.status(500).json({ message: 'Error streaming file' });
+            if (!res.headersSent) {
+                res.status(500).json({ message: 'Error streaming file' });
+            }
         });
 
         fileStream.pipe(res);
     } catch (error) {
         console.error('File serving error:', error);
-        res.status(500).json({ message: 'Server error' });
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Server error' });
+        }
     }
 });
 
