@@ -3,8 +3,11 @@ import React, { useState } from 'react';
 import { Modal, Form, Button, Row, Col } from 'react-bootstrap';
 import { BsPaperclip, BsTrash, BsFileEarmark } from 'react-icons/bs';
 import axios from 'axios';
+import MDEditor from '@uiw/react-md-editor';
+import { useTheme } from '../contexts/ThemeContext';
 
 const NoteModal = ({ show, handleClose, handleSubmit, formData, setFormData, editingNoteId }) => {
+  const { isDark } = useTheme();
   const [uploadProgress, setUploadProgress] = useState({});
   const [tempFiles, setTempFiles] = useState([]);
 
@@ -132,7 +135,7 @@ const NoteModal = ({ show, handleClose, handleSubmit, formData, setFormData, edi
             />
           </Form.Group>
           
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-3 attachment-header">
             <Form.Label>
               <BsPaperclip /> Attachments
             </Form.Label>
@@ -141,6 +144,17 @@ const NoteModal = ({ show, handleClose, handleSubmit, formData, setFormData, edi
               multiple
               onChange={handleFileUpload}
               accept="image/*,.pdf,.doc,.docx,.txt"
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <MDEditor
+              value={formData.content}
+              onChange={(value) => setFormData({ ...formData, content: value })}
+              preview="edit"
+              height={400}
+              data-color-mode={isDark ? 'dark' : 'light'}
+              className="md-editor-custom"
             />
           </Form.Group>
 

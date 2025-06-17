@@ -4,6 +4,11 @@ import { Button } from 'react-bootstrap';
 import { BsTrash } from 'react-icons/bs';
 import FileViewer from './FileViewer';
 
+const getFileUrl = (path) => {
+  const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  return `${baseUrl}/uploads${path}`;
+};
+
 const AttachmentPreview = ({ file, onDelete, isEditing }) => {
   const [showPreview, setShowPreview] = useState(false);
 
@@ -26,7 +31,7 @@ const AttachmentPreview = ({ file, onDelete, isEditing }) => {
         >
           {file.type.startsWith('image/') ? (
             <img
-              src={`https://notes-cw4m.onrender.com/${file.path}`}
+              src={getFileUrl(file.path)}
               alt={file.filename}
               className="preview-thumbnail"
             />

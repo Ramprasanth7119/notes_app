@@ -1,3 +1,270 @@
+/* Theme Variables */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --border-color: #dee2e6;
+  --card-bg: #ffffff;
+  --card-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  --navbar-bg: #ffffff;
+  --tag-bg: #e9ecef;
+  --button-gap: 0.75rem;
+  --editor-bg: #ffffff;
+  --editor-text: #2d3748;
+  --editor-toolbar-bg: #f8f9fa;
+  --editor-border: #e2e8f0;
+  --editor-preview-bg: #ffffff;
+  --muted-text-light: #6c757d;
+  --muted-text-dark: #b2bac2;
+  --attachment-bg-light: #f8f9fa;
+  --attachment-bg-dark: #2a3142;
+  --attachment-border-light: #dee2e6;
+  --attachment-border-dark: #3a4459;
+}
+
+[data-theme='dark'] {
+  --bg-primary: #1e2432;
+  --bg-secondary: #2a3142;
+  --text-primary: #e1e7ef;
+  --text-secondary: #b8c2cc;
+  --border-color: #3a4459;
+  --card-bg: #2a3142;
+  --card-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  --navbar-bg: #1a2234;
+  --tag-bg: #3a4459;
+  --editor-bg: #2d3748;
+  --editor-text: #e2e8f0;
+  --editor-toolbar-bg: #1a202c;
+  --editor-border: #4a5568;
+  --editor-preview-bg: #2d3748;
+}
+
+/* Card Text Styles */
+.card-text {
+  color: var(--text-primary) !important;
+  margin-bottom: 1rem;
+}
+
+/* App Title Styles */
+.app-title {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.text-muted{
+  color: #fff;
+}
+
+/* Markdown Editor Styles */
+.w-md-editor-text-input {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-secondary) !important;
+}
+
+.w-md-editor-toolbar {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Navbar Styles */
+.navbar {
+  background-color: var(--navbar-bg) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 1rem 0;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary) !important;
+}
+
+.nav-link {
+  color: var(--text-secondary) !important;
+  margin: 0 var(--button-gap);
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--text-primary) !important;
+}
+
+/* Button Spacing */
+.btn-group > .btn {
+  margin: 0 2px;
+}
+
+.btn:not(:last-child) {
+  margin-right: var(--button-gap);
+}
+
+/* Tag Styles */
+.badge {
+  margin: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background-color: var(--tag-bg) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500;
+  border-radius: 20px;
+}
+
+/* Navbar Action Buttons */
+.navbar-nav .btn {
+  margin: 0 var(--button-gap);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  margin-left: var(--button-gap);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+}
+
+/* Stats Button */
+.stats-button {
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Update note content styles */
+.note-content {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+/* Update modal styles */
+.modal-content {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.modal-header {
+  border-bottom-color: var(--border-color);
+}
+
+.modal-footer {
+  border-top-color: var(--border-color);
+}
+
+/* Update form control styles */
+.form-control {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.form-control:focus {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Update markdown editor styles */
+.w-md-editor {
+  background-color: var(--bg-secondary) !important;
+}
+
+.w-md-editor-text {
+  color: var(--text-primary) !important;
+}
+
+.w-md-editor-preview {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Update code block styles */
+pre, code {
+  background-color: var(--code-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Update modal styles */
+.modal-content {
+  background-color: var(--bg-primary);
+}
+
+.modal-header, .modal-footer {
+  border-color: var(--border-color);
+}
+
+/* Update note card styles */
+.note-card {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.note-card .card-text {
+  color: var(--text-secondary);
+}
+
+/* Update navbar styles */
+.navbar-dark {
+  background-color: #1a2234 !important;
+}
+
+/* Update dropdown styles */
+.dropdown-menu {
+  background-color: var(--card-bg);
+}
+
+.dropdown-item {
+  color: var(--text-primary);
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Update markdown preview styles */
+.markdown-preview {
+  color: var(--text-primary) !important;
+}
+
+/* Ensure text inputs have proper contrast */
+input, textarea {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-secondary) !important;
+}
+
+/* Update link colors */
+a {
+  color: var(--link-color);
+}
+
+a:hover {
+  color: var(--link-color);
+  opacity: 0.8;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 .file-viewer-modal .modal-dialog {
   max-width: 95vw;
   height: 90vh;
@@ -763,8 +1030,174 @@
   margin: 0 auto;
 }
 
-@media (max-width: 768px) {
-  .chart-container {
-    height: 250px;
-  }
+.card {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Markdown Editor Dark Mode Fixes */
+[data-theme='dark'] {
+    /* ...existing theme variables... */
+    --editor-bg: #2a3142;
+    --editor-text: #e1e7ef;
+    --editor-toolbar: #1a2234;
+}
+
+.w-md-editor {
+    background-color: var(--editor-bg) !important;
+    color: var(--editor-text) !important;
+}
+
+.w-md-editor-text-input, 
+.w-md-editor-text-pre > code,
+.w-md-editor-text-pre {
+    color: var(--editor-text) !important;
+    background-color: var(--editor-bg) !important;
+}
+
+.w-md-editor-toolbar {
+    background-color: var(--editor-toolbar) !important;
+    border-color: var(--border-color) !important;
+}
+
+.w-md-editor-toolbar li > button {
+    color: var(--text-secondary) !important;
+}
+
+.w-md-editor-toolbar li > button:hover {
+    color: var(--text-primary) !important;
+}
+
+/* Improved Navbar Styles */
+.navbar {
+    padding: 0.75rem 1rem;
+    background-color: var(--navbar-bg) !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-nav {
+    align-items: center;
+}
+
+.theme-toggle-container {
+    margin-left: auto;
+    padding-left: 1rem;
+}
+
+@media (max-width: 991px) {
+    .theme-toggle-container {
+        margin: 1rem auto;
+        padding: 0;
+    }
+    
+    .navbar-nav {
+        text-align: center;
+    }
+    
+    .nav-link {
+        padding: 0.5rem 0;
+    }
+}
+
+/* Markdown Editor Theme Variables */
+:root {
+  --editor-bg: #ffffff;
+  --editor-text: #2d3748;
+  --editor-toolbar-bg: #f8f9fa;
+  --editor-border: #e2e8f0;
+  --editor-preview-bg: #ffffff;
+}
+
+[data-theme='dark'] {
+  --editor-bg: #2d3748;
+  --editor-text: #e2e8f0;
+  --editor-toolbar-bg: #1a202c;
+  --editor-border: #4a5568;
+  --editor-preview-bg: #2d3748;
+}
+
+/* Markdown Editor Specific Styles */
+.w-md-editor {
+  background-color: var(--editor-bg) !important;
+  color: var(--editor-text) !important;
+  border-color: var(--editor-border) !important;
+}
+
+.w-md-editor-toolbar {
+  background-color: var(--editor-toolbar-bg) !important;
+  border-color: var(--editor-border) !important;
+}
+
+.w-md-editor-text-pre > code,
+.w-md-editor-text-input,
+.w-md-editor-text,
+.w-md-editor-text-pre {
+  color: var(--editor-text) !important;
+  background-color: var(--editor-bg) !important;
+  -webkit-text-fill-color: var(--editor-text) !important;
+}
+
+.w-md-editor-preview {
+  background-color: var(--editor-preview-bg) !important;
+  color: var(--editor-text) !important;
+}
+
+/* Editor Toolbar Buttons */
+.w-md-editor-toolbar li > button {
+  color: var(--editor-text) !important;
+}
+
+.w-md-editor-toolbar li > button:hover {
+  background-color: var(--editor-border) !important;
+}
+
+/* Code Block Styling */
+.wmde-markdown-var {
+  color: var(--editor-text) !important;
+}
+
+/* Markdown Preview Styles */
+.wmde-markdown {
+  background-color: var(--editor-preview-bg) !important;
+  color: var(--editor-text) !important;
+}
+
+.wmde-markdown code {
+  color: var(--editor-text) !important;
+  background-color: var(--editor-toolbar-bg) !important;
+}
+
+/* Text Muted Override */
+.text-muted {
+  color: var(--muted-text-light) !important;
+}
+
+.attachment-header {
+  background-color: var(--attachment-bg-light);
+  border: 1px solid var(--attachment-border-light);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Dark Theme Overrides */
+[data-theme='dark'] .text-muted {
+  color: var(--muted-text-dark) !important;
+}
+
+[data-theme='dark'] .attachment-header {
+  background-color: var(--attachment-bg-dark);
+  border-color: var(--attachment-border-dark);
+}
+
+/* Additional Helper Classes */
+.text-muted-hover:hover {
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.attachment-header-hover:hover {
+  border-color: var(--primary);
+  transition: border-color 0.2s ease;
 }

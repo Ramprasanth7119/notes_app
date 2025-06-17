@@ -307,7 +307,7 @@ const NoteView = ({ noteId: propNoteId, onBack }) => {
 
           {isEditing && (
             <div className="file-upload-section mt-4">
-              <h5 className="mb-3">
+              <h5 className="mb-3 attachments-header">
                 <BsPaperclip /> Attachments
               </h5>
               
