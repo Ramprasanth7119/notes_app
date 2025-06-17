@@ -149,7 +149,7 @@ router.get('/files/:filename', async (req, res) => {
             return res.status(404).json({ message: 'File not found' });
         }
 
-        // Set proper content type
+        // Set proper content type based on file extension
         const ext = path.extname(filename).toLowerCase();
         const contentTypes = {
             '.png': 'image/png',
@@ -161,13 +161,13 @@ router.get('/files/:filename', async (req, res) => {
             '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         };
 
-        const contentType = contentTypes[ext] || 'application/octet-stream';
-        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
         res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+        res.setHeader('Access-Control-Allow-Origin', '*');
 
         // Stream the file
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.pipe(res);
+        const stream = fs.createReadStream(filePath);
+        stream.pipe(res);
     } catch (error) {
         console.error('File serving error:', error);
         res.status(500).json({ message: 'Error serving file' });

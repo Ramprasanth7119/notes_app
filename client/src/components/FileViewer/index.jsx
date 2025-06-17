@@ -1,50 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Modal, Button, Spinner } from 'react-bootstrap';
-import { Document, Page, pdfjs } from 'react-pdf';
-import { BsX, BsDownload, BsZoomIn, BsZoomOut } from 'react-icons/bs';
-import axios from 'axios';
+import { BsX, BsDownload } from 'react-icons/bs';
+import './FileViewer.css';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+const API_URL = 'https://notes-cw4m.onrender.com';
 
 const FileViewer = ({ file, onClose }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [numPages, setNumPages] = useState(null);
-    const [pageNumber, setPageNumber] = useState(1);
-    const [zoom, setZoom] = useState(1);
 
-    const fileUrl = `https://notes-cw4m.onrender.com/api/notes/files/${file.path.split('/').pop()}`;
+    // Use useCallback to memoize the function
+    const getFileUrl = useCallback((filePath) => {
+        const filename = filePath.split('/').pop();
+        return `${API_URL}/api/notes/files/${filename}`;
+    }, []);
 
-    const handleDownload = async () => {
+    const handleDownload = useCallback(async () => {
         try {
-            const response = await axios.get(fileUrl, {
-                responseType: 'blob'
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const response = await fetch(getFileUrl(file.path));
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', file.filename);
+            link.download = file.filename;
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('Download error:', error);
+        } catch (err) {
             setError('Failed to download file');
+            console.error('Download error:', err);
         }
-    };
+    }, [file, getFileUrl]);
 
-    const renderContent = () => {
+    // Move content rendering to a memoized component
+    const FileContent = useCallback(() => {
         if (error) {
             return <div className="error-message">{error}</div>;
         }
+
+        const fileUrl = getFileUrl(file.path);
 
         if (file.type.startsWith('image/')) {
             return (
                 <img
                     src={fileUrl}
                     alt={file.filename}
-                    className="img-preview"
+                    className="file-preview-image"
                     onLoad={() => setLoading(false)}
                     onError={() => {
                         setLoading(false);
@@ -54,71 +56,34 @@ const FileViewer = ({ file, onClose }) => {
             );
         }
 
-        if (file.type === 'application/pdf') {
-            return (
-                <div className="pdf-container" style={{ transform: `scale(${zoom})` }}>
-                    <Document
-                        file={fileUrl}
-                        onLoadSuccess={({ numPages }) => {
-                            setNumPages(numPages);
-                            setLoading(false);
-                        }}
-                        onLoadError={(error) => {
-                            console.error('PDF load error:', error);
-                            setLoading(false);
-                            setError('Failed to load PDF');
-                        }}
-                        loading={<Spinner animation="border" />}
-                    >
-                        <Page pageNumber={pageNumber} />
-                    </Document>
-                </div>
-            );
-        }
-
-        return <div className="unsupported-file">This file type cannot be previewed</div>;
-    };
+        // Handle other file types
+        return (
+            <div className="file-info">
+                <p>File type: {file.type}</p>
+                <p>Filename: {file.filename}</p>
+                <Button variant="primary" onClick={handleDownload}>
+                    <BsDownload className="me-2" />
+                    Download File
+                </Button>
+            </div>
+        );
+    }, [error, file, getFileUrl, handleDownload]);
 
     return (
-        <Modal show={true} onHide={onClose} size="lg" centered className="file-viewer-modal">
+        <Modal show={true} onHide={onClose} size="lg" centered>
             <Modal.Header>
                 <Modal.Title>{file.filename}</Modal.Title>
-                <div className="modal-actions">
-                    <Button
-                        variant="outline-primary"
-                        onClick={handleDownload}
-                        className="me-2"
-                    >
-                        <BsDownload /> Download
-                    </Button>
-                    {file.type === 'application/pdf' && (
-                        <div className="zoom-controls me-2">
-                            <Button
-                                variant="outline-secondary"
-                                onClick={() => setZoom(prev => Math.max(prev - 0.2, 0.5))}
-                            >
-                                <BsZoomOut />
-                            </Button>
-                            <Button
-                                variant="outline-secondary"
-                                onClick={() => setZoom(prev => Math.min(prev + 0.2, 2))}
-                            >
-                                <BsZoomIn />
-                            </Button>
-                        </div>
-                    )}
-                    <Button variant="outline-danger" onClick={onClose}>
-                        <BsX size={24} />
-                    </Button>
-                </div>
+                <Button variant="outline-secondary" onClick={onClose}>
+                    <BsX size={20} />
+                </Button>
             </Modal.Header>
             <Modal.Body>
                 {loading && (
-                    <div className="loading-spinner">
+                    <div className="text-center p-4">
                         <Spinner animation="border" />
                     </div>
                 )}
-                {renderContent()}
+                <FileContent />
             </Modal.Body>
         </Modal>
     );
