@@ -140,27 +140,26 @@ router.delete('/:noteId/files/:fileId', async (req, res) => {
 router.get('/files/:filename', async (req, res) => {
     try {
         const filename = req.params.filename;
-        // Use absolute path for uploads directory
         const uploadsDir = path.join(process.cwd(), 'uploads');
         const filePath = path.join(uploadsDir, filename);
 
         // Ensure uploads directory exists
         try {
-            await fsPromises.access(uploadsDir);
+            await fs.access(uploadsDir);
         } catch {
-            await fsPromises.mkdir(uploadsDir, { recursive: true });
+            await fs.mkdir(uploadsDir, { recursive: true });
         }
 
         // Check if file exists
         try {
-            await fsPromises.access(filePath);
+            await fs.access(filePath);
         } catch {
             console.log(`File not found: ${filePath}`);
             return res.status(404).json({ message: 'File not found' });
         }
 
         // Get file stats
-        const stats = await fsPromises.stat(filePath);
+        const stats = await fs.stat(filePath);
         if (!stats.isFile()) {
             return res.status(404).json({ message: 'Not a file' });
         }
@@ -184,7 +183,7 @@ router.get('/files/:filename', async (req, res) => {
         res.setHeader('Cache-Control', 'public, max-age=31536000');
         res.setHeader('Access-Control-Allow-Origin', '*');
 
-        // Use regular fs for streaming
+        // Stream the file
         const fileStream = fs.createReadStream(filePath);
         fileStream.on('error', error => {
             console.error('Stream error:', error);
