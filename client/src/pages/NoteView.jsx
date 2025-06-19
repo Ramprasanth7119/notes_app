@@ -2,15 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Button, Row, Col, Badge, ButtonGroup, Form } from 'react-bootstrap';
 import { motion } from 'framer-motion';
-import { BsPinAngleFill, BsTrash, BsPencilSquare, BsCheck2, BsX, BsCloudUpload, BsPaperclip, BsArrowLeft } from 'react-icons/bs';
+import { BsPinAngleFill, BsTrash, BsPencilSquare, BsCheck2, BsX, BsCloudUpload, BsPaperclip, BsArrowLeft, BsLink45Deg } from 'react-icons/bs';
 import MDEditor from '@uiw/react-md-editor';
 import axios from 'axios';
 import moment from 'moment';
 
 import '@uiw/react-md-editor/markdown-editor.css';
-import AttachmentPreview from '../components/AttachmentPreview';
+import AttachmentPreview from '../files/AttachmentPreview';
 
-const NoteView = ({ noteId: propNoteId, onBack }) => {
+const NoteView = ({ noteId: propNoteId, onBack, showToast }) => {
   const { id: paramId } = useParams();
   const navigate = useNavigate();
   const [note, setNote] = useState(null);
@@ -145,14 +145,21 @@ const NoteView = ({ noteId: propNoteId, onBack }) => {
 
   const handleFileDelete = async (fileId) => {
     try {
+      showToast('Deleting file...', 'info');
       await axios.delete(`https://notes-cw4m.onrender.com/api/notes/${note._id}/files/${fileId}`);
       setNote(prev => ({
         ...prev,
         mediaFiles: prev.mediaFiles.filter(file => file._id !== fileId)
       }));
+      showToast('File deleted successfully', 'success');
     } catch (error) {
       console.error('Error deleting file:', error);
+      showToast('Failed to delete file', 'error');
     }
+  };
+
+  const handleSourceClick = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Add back button if onBack prop is provided
@@ -356,6 +363,30 @@ const NoteView = ({ noteId: propNoteId, onBack }) => {
                   </Col>
                 ))}
               </Row>
+            </div>
+          )}
+
+          {note.sources?.length > 0 && (
+            <div className="sources-section mt-4">
+              <h5 className="d-flex align-items-center gap-2">
+                <BsLink45Deg />
+                Reference Sources
+              </h5>
+              <div className="sources-grid">
+                {note.sources.map((source, index) => (
+                  <div 
+                    key={index}
+                    className="source-card"
+                    onClick={() => handleSourceClick(source.url)}
+                  >
+                    <div className="source-card-content">
+                      <BsLink45Deg className="source-icon" />
+                      <h6 className="source-title">{source.title}</h6>
+                      <small className="source-url">{source.url}</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

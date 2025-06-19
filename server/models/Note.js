@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 
+const sourceSchema = new mongoose.Schema({
+  title: String,
+  url: String
+});
+
 const mediaFileSchema = new mongoose.Schema({
   filename: String,
   path: String,
@@ -24,6 +29,7 @@ const noteSchema = new mongoose.Schema({
   wordCount: { type: Number, default: 0 },
   readingTime: { type: Number, default: 1 },
   mediaFiles: [mediaFileSchema],
+  sources: [sourceSchema], // Add sources array
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

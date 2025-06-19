@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Modal, Form, Row, Col } from 'react-bootstrap';
 import { motion } from 'framer-motion';
 import { BsFolder, BsFolderPlus, BsThreeDotsVertical, BsArrowLeft } from 'react-icons/bs';
-import NoteView from '../pages/NoteView';
+import NoteView from '../../pages/NoteView';
 import axios from 'axios';
 
-const Collections = () => {
+const Collections = ({ showToast }) => {
   const [collections, setCollections] = useState([]);
   const [showNewModal, setShowNewModal] = useState(false);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
@@ -76,6 +76,37 @@ const Collections = () => {
       
     } catch (error) {
       console.error('Error adding note to collection:', error);
+    }
+  };
+
+  const handleDeleteCollection = async (collectionId) => {
+    if (window.confirm('Are you sure you want to delete this collection?')) {
+      try {
+        showToast('Deleting collection...', 'info');
+        await axios.delete(`https://notes-cw4m.onrender.com/api/collections/${collectionId}`);
+        setCollections(prev => prev.filter(c => c._id !== collectionId));
+        showToast('Collection deleted successfully', 'success');
+      } catch (error) {
+        console.error('Error deleting collection:', error);
+        showToast('Failed to delete collection', 'error');
+      }
+    }
+  };
+
+  const handleRemoveNoteFromCollection = async (noteId) => {
+    try {
+      showToast('Removing note from collection...', 'info');
+      await axios.delete(
+        `https://notes-cw4m.onrender.com/api/collections/${selectedCollection._id}/notes/${noteId}`
+      );
+      setSelectedCollection(prev => ({
+        ...prev,
+        notes: prev.notes.filter(note => note._id !== noteId)
+      }));
+      showToast('Note removed from collection', 'success');
+    } catch (error) {
+      console.error('Error removing note:', error);
+      showToast('Failed to remove note', 'error');
     }
   };
 

@@ -7,7 +7,7 @@ import { BsThreeDotsVertical, BsTrash, BsPinFill } from 'react-icons/bs';
 import moment from 'moment';
 import axios from 'axios';
 
-const NoteCard = ({ note, onDeleteNote }) => {
+const NoteCard = ({ note, onDeleteNote, showToast }) => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
 
@@ -19,13 +19,16 @@ const NoteCard = ({ note, onDeleteNote }) => {
   };
 
   const handleDelete = async (e) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this note?')) {
       try {
+        showToast('Deleting note...', 'info');
         await axios.delete(`https://notes-cw4m.onrender.com/api/notes/${note._id}`);
         onDeleteNote(note._id);
+        showToast('Note deleted successfully', 'success');
       } catch (error) {
         console.error('Error deleting note:', error);
+        showToast('Failed to delete note', 'error');
       }
     }
   };

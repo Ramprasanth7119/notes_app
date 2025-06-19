@@ -1,15 +1,53 @@
 // src/components/NoteModal.jsx
 import React, { useState } from 'react';
-import { Modal, Form, Button, Row, Col } from 'react-bootstrap';
-import { BsPaperclip, BsTrash, BsFileEarmark } from 'react-icons/bs';
+import { Modal, Form, Button, Row, Col, InputGroup } from 'react-bootstrap';
+import { BsPaperclip, BsTrash, BsFileEarmark, BsLink45Deg, BsPlusCircle } from 'react-icons/bs';
 import axios from 'axios';
 import MDEditor from '@uiw/react-md-editor';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const NoteModal = ({ show, handleClose, handleSubmit, formData, setFormData, editingNoteId }) => {
   const { isDark } = useTheme();
   const [uploadProgress, setUploadProgress] = useState({});
   const [tempFiles, setTempFiles] = useState([]);
+  const [newSource, setNewSource] = useState({ title: '', url: '' });
+
+  // Add sources array to formData if it doesn't exist
+  if (!formData.sources) {
+    setFormData({ ...formData, sources: [] });
+  }
+
+  const validateUrl = (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleAddSource = () => {
+    if (newSource.title && newSource.url) {
+      if (!validateUrl(newSource.url)) {
+        showToast('Please enter a valid URL', 'error');
+        return;
+      }
+      
+      setFormData({
+        ...formData,
+        sources: [...(formData.sources || []), {
+          ...newSource,
+          url: newSource.url.startsWith('http') ? newSource.url : `https://${newSource.url}`
+        }]
+      });
+      setNewSource({ title: '', url: '' }); // Reset form
+    }
+  };
+
+  const handleRemoveSource = (index) => {
+    const updatedSources = formData.sources.filter((_, i) => i !== index);
+    setFormData({ ...formData, sources: updatedSources });
+  };
 
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -156,6 +194,80 @@ const NoteModal = ({ show, handleClose, handleSubmit, formData, setFormData, edi
               data-color-mode={isDark ? 'dark' : 'light'}
               className="md-editor-custom"
             />
+          </Form.Group>
+
+          <Form.Group className="mb-4">
+            <Form.Label className="d-flex align-items-center gap-2">
+              <BsLink45Deg size={20} />
+              <span>Reference Sources</span>
+            </Form.Label>
+            
+            <div className="source-input-container p-3 border rounded mb-3">
+              <Row className="g-2">
+                <Col xs={12} md={5}>
+                  <Form.Control
+                    placeholder="Source Title"
+                    value={newSource.title}
+                    onChange={(e) => setNewSource({...newSource, title: e.target.value})}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddSource()}
+                  />
+                </Col>
+                <Col xs={12} md={5}>
+                  <Form.Control
+                    type="url"
+                    placeholder="https://example.com"
+                    value={newSource.url}
+                    onChange={(e) => setNewSource({...newSource, url: e.target.value})}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddSource()}
+                  />
+                </Col>
+                <Col xs={12} md={2}>
+                  <Button 
+                    variant="primary" 
+                    onClick={handleAddSource}
+                    className="w-100"
+                    disabled={!newSource.title || !newSource.url}
+                  >
+                    <BsPlusCircle className="me-1" /> Add
+                  </Button>
+                </Col>
+              </Row>
+            </div>
+
+            {/* Sources list */}
+            {formData.sources?.length > 0 && (
+              <div className="sources-list-container border rounded p-2">
+                {formData.sources.map((source, index) => (
+                  <div 
+                    key={index} 
+                    className="source-item d-flex align-items-center gap-2 p-2 border-bottom"
+                  >
+                    <BsLink45Deg className="text-muted" />
+                    <div className="flex-grow-1">
+                      <a 
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="source-link"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.open(source.url, '_blank');
+                        }}
+                      >
+                        {source.title}
+                      </a>
+                    </div>
+                    <Button
+                      variant="link"
+                      className="text-danger p-0"
+                      onClick={() => handleRemoveSource(index)}
+                    >
+                      <BsTrash />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </Form.Group>
 
           {(tempFiles.length > 0 || formData.mediaFiles?.length > 0) && (

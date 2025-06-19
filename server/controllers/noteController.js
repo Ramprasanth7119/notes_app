@@ -23,7 +23,7 @@ const calculateWordStats = (content) => {
 
 const createNote = async (req, res) => {
   try {
-    let { date, month, title, content, tags } = req.body;
+    let { date, month, title, content, tags, sources } = req.body;
 
     // Validate required fields
     if (!content) {
@@ -57,13 +57,14 @@ const createNote = async (req, res) => {
     // Calculate word stats
     const stats = calculateWordStats(content);
 
-    // Create the note
+    // Create the note with sources
     const note = await Note.create({
       date,
       month,
       title,
       content,
       tags: uniqueTags,
+      sources: sources || [], // Add sources array
       wordCount: stats.wordCount,
       readingTime: stats.readingTime,
       mediaFiles: [],

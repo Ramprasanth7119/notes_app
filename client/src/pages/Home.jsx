@@ -4,12 +4,12 @@ import { motion } from 'framer-motion';
 import { BsPlusLg, BsSearch, BsFilter, BsSortDown, BsSortDownAlt } from 'react-icons/bs';
 import moment from 'moment';
 import axios from 'axios';
-import NoteCard from '../components/NoteCard';
-import AddNoteModal from '../components/AddNoteModal';
+import NoteCard from '../components/notes/NoteCard';
+import AddNoteModal from '../components/notes/AddNoteModal';
 import StatsDisplay from '../components/StatsDisplay'; // Add this import at the top
 
 
-const Home = () => {
+const Home = ({ showToast }) => {
   const [notes, setNotes] = useState([]);
   const [filteredNotes, setFilteredNotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -209,11 +209,12 @@ const Home = () => {
             animate="show"
           >
             <Row>
-              {filteredNotes.map(note => (
+              {notes.map(note => (
                 <Col key={note._id} xs={12} md={6} lg={4} className="mb-4">
                   <NoteCard 
                     note={note}
                     onDeleteNote={handleDeleteNote}
+                    showToast={showToast}
                   />
                 </Col>
               ))}

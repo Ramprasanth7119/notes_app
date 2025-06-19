@@ -1432,3 +1432,84 @@ body {
 .theme-toggle-btn:hover svg {
     transform: rotate(45deg);
 }
+
+.navbar-custom {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1030;
+}
+
+.brand-logo {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.nav-link-custom {
+    margin: 0 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.theme-toggle-wrapper {
+  margin-left: 1rem;
+}
+
+/* Mobile view adjustments */
+@media (max-width: 991px) {
+    .navbar-collapse {
+        padding: 1rem 0;
+    }
+
+    .nav-link-custom {
+        margin: 0.5rem 0;
+        text-align: center;
+    }
+
+    .theme-toggle-wrapper {
+        margin: 1rem 0;
+        display: flex;
+        justify-content: center;
+    }
+
+    .ms-auto {
+        margin-top: 1rem;
+        align-items: center;
+        gap: 1rem;
+    }
+}
+
+/* Toast Styles */
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1060;
+}
+
+.toast {
+  min-width: 250px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.toast-header {
+  border-bottom: none;
+  padding: 0.5rem 1rem;
+}
+
+.toast-body {
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+}
+
+[data-theme='dark'] .toast {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .toast-header {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Add padding to body to prevent content from hiding under navbar */
+body {
+  padding-top: 72px;
+}
