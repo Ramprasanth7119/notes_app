@@ -13,6 +13,7 @@ export const excerpt = (markdown = '', length = 160) => {
     .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/^#+\s*/gm, '')
+    .replace(/^\s*(?:[-*+]|\d+\.)\s+/gm, '')
     .replace(/[*_~`>]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
