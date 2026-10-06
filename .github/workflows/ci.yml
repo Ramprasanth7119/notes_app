@@ -29,3 +29,20 @@ jobs:
           key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('server/package-lock.json') }}
       - run: npm ci
       - run: npm run test:coverage
+
+  client:
+    name: Client lint and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build

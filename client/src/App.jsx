@@ -1,51 +1,42 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from './contexts/ThemeContext';
-import NavigationBar from './components/layout/Navbar';
-import ToastMessage from './components/common/ToastMessage';
-import Home from './pages/Home';
-import NoteView from './pages/NoteView';
-import EditNote from './pages/EditNote';
-import Collections from './components/collections/Collections';
-import './App.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import AppShell from './components/layout/AppShell';
+import { PublicOnly, RequireAuth } from './components/layout/RouteGuards';
+import { LoadingState } from './components/ui/States';
+import AuthPage from './pages/AuthPage';
+import CollectionsPage from './pages/CollectionsPage';
+import NotesPage from './pages/NotesPage';
+import NotFoundPage from './pages/NotFoundPage';
 
-function App() {
-  const [toast, setToast] = useState({
-    show: false,
-    message: '',
-    type: 'success'
-  });
+// Pages that pull in the markdown editor are split into their own chunks.
+const NoteDetailPage = lazy(() => import('./pages/NoteDetailPage'));
+const CollectionDetailPage = lazy(() => import('./pages/CollectionDetailPage'));
 
-  const showToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-  };
+const lazyPage = (Page) => (
+  <Suspense fallback={<LoadingState />}>
+    <Page />
+  </Suspense>
+);
 
-  const hideToast = () => {
-    setToast(prev => ({ ...prev, show: false }));
-  };
-
+export default function App() {
   return (
-    <ThemeProvider>
-      <Router>
-        <NavigationBar showToast={showToast} />
-        <ToastMessage 
-          show={toast.show}
-          message={toast.message}
-          type={toast.type}
-          onClose={hideToast}
-        />
-        <div className="container mt-4">
-          <Routes>
-            <Route path="/" element={<Home showToast={showToast} />} />
-            <Route path="/notes/:id" element={<NoteView showToast={showToast} />} />
-            <Route path="/edit/:id" element={<EditNote showToast={showToast} />} />
-            <Route path="/collections" element={<Collections showToast={showToast} />} />
-          </Routes>
-        </div>
-      </Router>
-    </ThemeProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<PublicOnly />}>
+          <Route path="/login" element={<AuthPage mode="login" />} />
+          <Route path="/register" element={<AuthPage mode="register" />} />
+        </Route>
+
+        <Route element={<RequireAuth />}>
+          <Route element={<AppShell />}>
+            <Route index element={<NotesPage />} />
+            <Route path="notes/:id" element={lazyPage(NoteDetailPage)} />
+            <Route path="collections" element={<CollectionsPage />} />
+            <Route path="collections/:id" element={lazyPage(CollectionDetailPage)} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;

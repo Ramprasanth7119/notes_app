@@ -1,91 +1,69 @@
-// src/components/NoteCard.jsx
-import React, { useState } from 'react';
-import { Card, Dropdown } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { BsThreeDotsVertical, BsTrash, BsPinFill } from 'react-icons/bs';
-import moment from 'moment';
-import axios from 'axios';
+import { Link } from 'react-router-dom';
+import { BsPaperclip, BsPinAngleFill } from 'react-icons/bs';
+import { excerpt, formatDate } from '../../lib/format';
 
-const NoteCard = ({ note, onDeleteNote, showToast }) => {
-  const navigate = useNavigate();
-  const [showMenu, setShowMenu] = useState(false);
+export function TagList({ tags, onTagClick, activeTag }) {
+  if (!tags?.length) return null;
+  return (
+    <ul className="tags" aria-label="Tags">
+      {tags.map((tag) => (
+        <li key={tag}>
+          {onTagClick ? (
+            <button
+              type="button"
+              className={`tag${tag === activeTag ? ' tag--active' : ''}`}
+              onClick={() => onTagClick(tag)}
+              aria-pressed={tag === activeTag}
+            >
+              #{tag}
+            </button>
+          ) : (
+            <span className="tag">#{tag}</span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
-  const handleCardClick = (e) => {
-    e.preventDefault();
-    if (note && note._id) {
-      navigate(`/notes/${note._id}`);
-    }
-  };
+export function NoteCardSkeleton() {
+  return (
+    <div className="card note-card note-card--skeleton" aria-hidden="true">
+      <span className="skeleton skeleton--title" />
+      <span className="skeleton" />
+      <span className="skeleton" />
+      <span className="skeleton skeleton--short" />
+    </div>
+  );
+}
 
-  const handleDelete = async (e) => {
-    e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      try {
-        showToast('Deleting note...', 'info');
-        await axios.delete(`https://notes-cw4m.onrender.com/api/notes/${note._id}`);
-        onDeleteNote(note._id);
-        showToast('Note deleted successfully', 'success');
-      } catch (error) {
-        console.error('Error deleting note:', error);
-        showToast('Failed to delete note', 'error');
-      }
-    }
-  };
+export default function NoteCard({ note, onTagClick, activeTag, action }) {
+  const preview = excerpt(note.content);
+  const attachments = note.mediaFiles?.length || 0;
 
   return (
-    <motion.div
-      whileHover={{ y: -5 }}
-      onHoverStart={() => setShowMenu(true)}
-      onHoverEnd={() => setShowMenu(false)}
-    >
-      <Card className="note-card" onClick={handleCardClick}>
-        <Card.Header className="d-flex justify-content-between align-items-center border-0 bg-transparent">
-          <div>
-            {note.pinned && <BsPinFill className="text-warning" />}
-          </div>
-          <Dropdown 
-            onClick={(e) => e.stopPropagation()}
-            className={`three-dots ${showMenu ? 'visible' : 'invisible'}`}
-          >
-            <Dropdown.Toggle as="div" className="custom-toggle">
-              <BsThreeDotsVertical />
-            </Dropdown.Toggle>
-            <Dropdown.Menu align="end">
-              <Dropdown.Item 
-                className="text-danger"
-                onClick={handleDelete}
-              >
-                <BsTrash className="me-2" /> Delete Note
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-        </Card.Header>
-
-        <Card.Body>
-          <Card.Title>{note.title}</Card.Title>
-          <Card.Text className="text-muted">
-            {note.content?.slice(0, 100)}...
-          </Card.Text>
-          {note.tags?.length > 0 && (
-            <div className="mb-2">
-              {note.tags.map(tag => (
-                <span key={tag} className="badge bg-light text-secondary me-1">
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </Card.Body>
-
-        <Card.Footer className="bg-transparent border-top-0">
-          <small className="text-muted">
-            Last updated {moment(note.updatedAt).fromNow()}
-          </small>
-        </Card.Footer>
-      </Card>
-    </motion.div>
+    <article className={`card note-card${note.pinned ? ' note-card--pinned' : ''}`}>
+      <header className="note-card__header">
+        <h3 className="note-card__title">
+          {/* The ::after of this link covers the card, so the whole card is clickable. */}
+          <Link to={`/notes/${note._id}`} className="stretched-link">
+            {note.title}
+          </Link>
+        </h3>
+        {note.pinned && <BsPinAngleFill className="note-card__pin" aria-label="Pinned" />}
+      </header>
+      {preview && <p className="note-card__excerpt">{preview}</p>}
+      <TagList tags={note.tags} onTagClick={onTagClick} activeTag={activeTag} />
+      <footer className="note-card__meta">
+        <span>{formatDate(note.updatedAt)}</span>
+        {attachments > 0 && (
+          <span>
+            <BsPaperclip aria-hidden="true" /> {attachments}
+            <span className="visually-hidden"> attachments</span>
+          </span>
+        )}
+        {action && <span className="note-card__action">{action}</span>}
+      </footer>
+    </article>
   );
-};
-
-export default NoteCard;
+}
