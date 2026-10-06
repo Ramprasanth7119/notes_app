@@ -46,8 +46,9 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  // busboy rejects a file that *reaches* fileSize, so +1 allows exactly 5 MB.
-  limits: { fileSize: MAX_FILE_SIZE + 1, files: 1 }
+  // multer >= 2.4 treats fileSize as "at most", so exactly 5 MB is allowed
+  // (tested in validation.test.js).
+  limits: { fileSize: MAX_FILE_SIZE, files: 1 }
 });
 
 module.exports = { upload, MAX_FILE_SIZE };

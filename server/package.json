@@ -4,11 +4,11 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
-    "start": "nodemon index.js",
-    "postinstall": "mkdir -p uploads && chmod 755 uploads",
+    "start": "node index.js",
     "test:watch": "vitest",
     "migrate:assign-owner": "node scripts/assignOwner.js",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "dev": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
@@ -20,15 +20,17 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.15.1",
-    "multer": "^2.0.1",
-    "nodemon": "^3.1.10",
+    "multer": "^2.4.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.3",
     "mongodb-memory-server-core": "^11.3.0",
+    "nodemon": "^3.1.14",
     "supertest": "^7.3.1",
     "vitest": "^5.0.3"
   }
