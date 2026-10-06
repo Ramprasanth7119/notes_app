@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "start": "nodemon index.js",
-    "postinstall": "mkdir -p uploads && chmod 755 uploads"
+    "postinstall": "mkdir -p uploads && chmod 755 uploads",
+    "test:watch": "vitest",
+    "migrate:assign-owner": "node scripts/assignOwner.js"
   },
   "keywords": [],
   "author": "",
@@ -13,11 +15,18 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.15.1",
     "multer": "^2.0.1",
     "nodemon": "^3.1.10"
+  },
+  "devDependencies": {
+    "mongodb-memory-server-core": "^11.3.0",
+    "supertest": "^7.3.1",
+    "vitest": "^5.0.3"
   }
 }

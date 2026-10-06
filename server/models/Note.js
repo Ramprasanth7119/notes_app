@@ -11,33 +11,24 @@ const mediaFileSchema = new mongoose.Schema({
   type: String
 });
 
-mediaFileSchema.pre('save', function(next) {
-  // Convert absolute paths to relative paths
-  if (this.path && this.path.includes('uploads')) {
-    this.path = this.path.split('uploads')[1];
-  }
-  next();
-});
-
-const noteSchema = new mongoose.Schema({
-  date: { type: String, required: true },
-  month: { type: String, required: true },
-  title: { type: String, required: true },
-  tags: { type: [String], default: [] },
-  content: { type: String, required: true },
-  pinned: { type: Boolean, default: false },
-  wordCount: { type: Number, default: 0 },
-  readingTime: { type: Number, default: 1 },
-  mediaFiles: [mediaFileSchema],
-  sources: [sourceSchema], // Add sources array
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-// Add pre-save middleware to update the updatedAt timestamp
-noteSchema.pre('save', function(next) {
-  this.updatedAt = new Date();
-  next();
-});
+const noteSchema = new mongoose.Schema(
+  {
+    // Set from the verified JWT on create; never taken from the request body.
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    date: { type: String, required: true },
+    month: { type: String, required: true },
+    title: { type: String, required: true },
+    tags: { type: [String], default: [] },
+    content: { type: String, required: true },
+    pinned: { type: Boolean, default: false },
+    wordCount: { type: Number, default: 0 },
+    readingTime: { type: Number, default: 1 },
+    mediaFiles: [mediaFileSchema],
+    sources: [sourceSchema]
+  },
+  // Keeps the existing createdAt/updatedAt fields, and unlike the previous
+  // pre('save') hook also bumps updatedAt on findOneAndUpdate.
+  { timestamps: true }
+);
 
 module.exports = mongoose.model('Note', noteSchema);

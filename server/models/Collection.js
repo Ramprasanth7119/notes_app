@@ -1,32 +1,29 @@
 const mongoose = require('mongoose');
 
-const collectionSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
+const collectionSchema = new mongoose.Schema(
+  {
+    // Set from the verified JWT on create; never taken from the request body.
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    description: {
+      type: String,
+      default: ''
+    },
+    notes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Note'
+    }]
   },
-  description: {
-    type: String,
-    default: ''
-  },
-  notes: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Note'
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
-});
-
-collectionSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
+  { timestamps: true }
+);
 
 module.exports = mongoose.model('Collection', collectionSchema);

@@ -1,12 +1,10 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const dbconn = mongoose
-  .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/notesapp")
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
-  });
+const connectDB = (uri) => {
+  if (!uri) {
+    throw new Error('MONGO_URI is not set. Copy server/.env.example to server/.env and fill it in.');
+  }
+  return mongoose.connect(uri);
+};
 
-module.exports = dbconn;
+module.exports = connectDB;
