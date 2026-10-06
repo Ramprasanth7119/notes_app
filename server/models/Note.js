@@ -14,7 +14,7 @@ const mediaFileSchema = new mongoose.Schema({
 const noteSchema = new mongoose.Schema(
   {
     // Set from the verified JWT on create; never taken from the request body.
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     date: { type: String, required: true },
     month: { type: String, required: true },
     title: { type: String, required: true },
@@ -40,5 +40,15 @@ noteSchema.index(
   { owner: 1, title: 'text', content: 'text' },
   { name: 'note_text_search', weights: { title: 5, content: 1 } }
 );
+
+// Listing and browsing: one user's notes, pinned first, newest first. With
+// this index MongoDB reads only the 10 entries of the requested page instead
+// of loading and sorting all of the user's notes (found with
+// scripts/benchmarkSearch.js). Its owner prefix also serves every other
+// "notes of this user" query.
+noteSchema.index({ owner: 1, pinned: -1, updatedAt: -1, _id: -1 }, { name: 'note_owner_browse' });
+
+// Same, filtered by tag (the tag chips in the UI).
+noteSchema.index({ owner: 1, tags: 1, pinned: -1, updatedAt: -1, _id: -1 }, { name: 'note_owner_tag_browse' });
 
 module.exports = mongoose.model('Note', noteSchema);

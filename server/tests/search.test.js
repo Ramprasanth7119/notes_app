@@ -244,6 +244,21 @@ describe('index', () => {
     expect(JSON.stringify(plan.queryPlanner.winningPlan)).toContain('note_text_search');
   });
 
+  it('browsing and tag filtering read the page from an index instead of sorting in memory', async () => {
+    await createNote(alice.agent, { title: 'Indexed', content: 'something', tags: ['x'] });
+    const sort = { pinned: -1, updatedAt: -1, _id: -1 };
+
+    const browse = await Note.find({ owner: alice.user.id }).sort(sort).limit(10).explain('queryPlanner');
+    const browsePlan = JSON.stringify(browse.queryPlanner.winningPlan);
+    expect(browsePlan).toContain('note_owner_browse');
+    expect(browsePlan).not.toContain('"SORT"');
+
+    const byTag = await Note.find({ owner: alice.user.id, tags: 'x' }).sort(sort).limit(10).explain('queryPlanner');
+    const tagPlan = JSON.stringify(byTag.queryPlanner.winningPlan);
+    expect(tagPlan).toContain('note_owner_tag_browse');
+    expect(tagPlan).not.toContain('"SORT"');
+  });
+
   it('cannot run a text query without an owner (scoping is enforced by the index)', async () => {
     await expect(Note.find({ $text: { $search: 'anything' } }).exec()).rejects.toThrow(/text index/i);
   });
