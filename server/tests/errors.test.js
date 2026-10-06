@@ -63,6 +63,23 @@ describe('unified error responses', () => {
     expect(String(log.mock.calls[0][1])).toMatch(/connection to mongodb/);
   });
 
+  it('malformed JSON returns 400, not 500', async () => {
+    const { agent } = await signUp();
+    const res = await agent.post('/api/notes').set('Content-Type', 'application/json').send('{"content": ');
+
+    expectError(res, 400, 'INVALID_JSON');
+  });
+
+  it('a query operator in place of a value is rejected, not executed', async () => {
+    const { agent } = await signUp();
+    const note = (await agent.post('/api/notes').send({ title: 'T', content: 'C' })).body.data;
+    const res = await agent.put(`/api/notes/${note._id}`).send({ title: { $gt: '' } });
+
+    expectError(res, 400, 'VALIDATION_ERROR');
+    expect(res.body.error.details).toEqual([{ field: 'body.title', message: expect.any(String) }]);
+    expect((await Note.findById(note._id).lean()).title).toBe('T');
+  });
+
   it('expected errors (4xx) are not logged as server errors', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     await request(app).get('/api/notes');

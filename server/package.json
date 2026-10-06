@@ -7,7 +7,8 @@
     "start": "nodemon index.js",
     "postinstall": "mkdir -p uploads && chmod 755 uploads",
     "test:watch": "vitest",
-    "migrate:assign-owner": "node scripts/assignOwner.js"
+    "migrate:assign-owner": "node scripts/assignOwner.js",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +27,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^5.0.3",
     "mongodb-memory-server-core": "^11.3.0",
     "supertest": "^7.3.1",
     "vitest": "^5.0.3"

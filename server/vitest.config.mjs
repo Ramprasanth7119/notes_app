@@ -14,6 +14,11 @@ export default defineConfig({
       BCRYPT_SALT_ROUNDS: '4',
       UPLOAD_DIR: path.join(os.tmpdir(), 'notes-app-test-uploads')
     },
+    coverage: {
+      provider: 'v8',
+      include: ['app.js', 'config/**', 'controllers/**', 'middleware/**', 'models/**', 'routes/**', 'scripts/**', 'utils/**', 'validation/**'],
+      reporter: ['text-summary', 'text']
+    },
     testTimeout: 20000,
     hookTimeout: 120000
   }

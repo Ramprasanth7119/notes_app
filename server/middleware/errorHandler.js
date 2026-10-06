@@ -58,6 +58,10 @@ const errorHandler = (err, req, res, next) => {
 
   const error = { code, message };
   if (details) error.details = details;
+  // A file response may already have set these (res.attachment) before the
+  // file turned out to be missing; the error must still go out as JSON.
+  res.removeHeader('Content-Disposition');
+  res.type('application/json');
   res.status(status).json({ success: false, error });
 };
 

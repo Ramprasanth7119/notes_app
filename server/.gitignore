@@ -1,2 +1,4 @@
 .env
 node_modules/
+# Test coverage output
+coverage/
