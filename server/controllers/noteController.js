@@ -5,11 +5,15 @@ const Note = require('../models/Note');
 const Collection = require('../models/Collection');
 const config = require('../config/env');
 const { extractHashtags } = require('../utils/hashtags');
-const { isObjectId } = require('../utils/objectId');
+const { notFound, validationError } = require('../utils/AppError');
 
 // Every query in this file includes `owner: req.user.id`. req.user is set by
 // requireAuth from the verified JWT, so a client cannot read or change another
 // user's notes by sending a different id or owner value.
+//
+// Request input is validated by validation/notes.js before these handlers run;
+// they read the parsed values from req.valid. Errors are thrown and turned
+// into responses by middleware/errorHandler.js.
 
 const calculateWordStats = (content) => {
   if (!content) return { wordCount: 0, readingTime: 0 };
@@ -43,19 +47,22 @@ const removeUploadedFile = async (file) => {
   }
 };
 
-const createNote = async (req, res) => {
-  let { date, month, title, content, tags, sources } = req.body;
+// "2026-10-06" -> "October"
+const monthName = (isoDate) =>
+  new Date(`${isoDate}T00:00:00Z`).toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
 
-  // Validate required fields
-  if (!content) {
-    return res.status(400).json({ error: 'Content is required' });
-  }
+// Tags the client chose plus #hashtags found in the content, without duplicates.
+const mergeTags = (tags, content) => [...new Set([...tags, ...extractHashtags(content)])];
+
+const createNote = async (req, res) => {
+  let { date, month, title, content, tags = [], sources = [] } = req.valid.body;
 
   // If date is not provided, use current date
   if (!date) {
-    const today = new Date();
-    date = today.toISOString().split('T')[0];
-    month = today.toLocaleString('default', { month: 'long' });
+    date = new Date().toISOString().split('T')[0];
+  }
+  if (!month) {
+    month = monthName(date);
   }
 
   // Extract title from first line if not provided
@@ -63,10 +70,6 @@ const createNote = async (req, res) => {
     const firstLine = content.split('\n')[0];
     title = firstLine.replace(/^#+\s*/, '').slice(0, 100); // Remove markdown headers and limit length
   }
-
-  // Merge #hashtags found in the content with the tags sent by the client
-  const providedTags = Array.isArray(tags) ? tags : [];
-  const uniqueTags = [...new Set([...providedTags, ...extractHashtags(content)])];
 
   const stats = calculateWordStats(content);
 
@@ -76,8 +79,8 @@ const createNote = async (req, res) => {
     month,
     title,
     content,
-    tags: uniqueTags,
-    sources: sources || [],
+    tags: mergeTags(tags, content),
+    sources,
     wordCount: stats.wordCount,
     readingTime: stats.readingTime,
     mediaFiles: [],
@@ -116,24 +119,9 @@ const getNotesByMonth = async (req, res) => {
 const getNoteByDate = async (req, res) => {
   const note = await Note.findOne({ owner: req.user.id, date: req.params.date });
   if (!note) {
-    return res.status(404).json({ message: 'Note not found' });
+    throw notFound('Note');
   }
   res.status(200).json(note);
-};
-
-const SEARCH_DEFAULT_LIMIT = 10;
-const SEARCH_MAX_LIMIT = 50;
-// Deep pages get slower with skip(); nobody pages this far through notes.
-const SEARCH_MAX_PAGE = 10000;
-const SEARCH_MAX_QUERY_LENGTH = 200;
-
-// Returns the integer, the fallback when the param is absent, or null when
-// the value is not a whole number in [1, max].
-const parseBoundedInt = (raw, fallback, max) => {
-  if (raw === undefined) return fallback;
-  if (typeof raw !== 'string' || !/^\d+$/.test(raw)) return null;
-  const value = Number(raw);
-  return value >= 1 && value <= max ? value : null;
 };
 
 // GET /api/notes/search?q=&tag=&collection=&page=&limit=
@@ -141,38 +129,20 @@ const parseBoundedInt = (raw, fallback, max) => {
 // user's notes (pinned first, newest first), so the same endpoint serves
 // "search" and "browse with filters".
 const searchNotes = async (req, res) => {
-  const { q = '', tag = '', collection = '' } = req.query;
-  // ?q=a&q=b arrives as an array; only plain strings are accepted.
-  if ([q, tag, collection].some((value) => typeof value !== 'string')) {
-    return res.status(400).json({ message: 'q, tag and collection may each be given only once' });
-  }
-
-  const text = q.trim();
-  if (text.length > SEARCH_MAX_QUERY_LENGTH) {
-    return res.status(400).json({ message: `q must be at most ${SEARCH_MAX_QUERY_LENGTH} characters` });
-  }
-  const page = parseBoundedInt(req.query.page, 1, SEARCH_MAX_PAGE);
-  if (page === null) {
-    return res.status(400).json({ message: `page must be a whole number from 1 to ${SEARCH_MAX_PAGE}` });
-  }
-  const limit = parseBoundedInt(req.query.limit, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT);
-  if (limit === null) {
-    return res.status(400).json({ message: `limit must be a whole number from 1 to ${SEARCH_MAX_LIMIT}` });
-  }
-  if (collection && !isObjectId(collection)) {
-    return res.status(400).json({ message: 'collection must be a valid id' });
-  }
+  // Parsed by searchQuery: q/tag trimmed, page/limit are bounded integers,
+  // collection is '' or a valid id.
+  const { q: text, tag, collection, page, limit } = req.valid.query;
 
   // owner comes first and is always present: a user can only ever search
   // their own notes, and the text index requires it (see models/Note.js).
   const filter = { owner: req.user.id };
   if (text) filter.$text = { $search: text };
-  if (tag.trim()) filter.tags = tag.trim();
+  if (tag) filter.tags = tag;
   if (collection) {
     // Filtering by someone else's collection is reported like a missing one.
     const found = await Collection.findOne({ _id: collection, owner: req.user.id }, 'notes').lean();
     if (!found) {
-      return res.status(404).json({ message: 'Collection not found' });
+      throw notFound('Collection');
     }
     filter._id = { $in: found.notes };
   }
@@ -197,31 +167,29 @@ const searchNotes = async (req, res) => {
 };
 
 const updateNote = async (req, res) => {
-  // Only these fields can be changed by the client. owner, mediaFiles, etc.
-  // in the body are ignored.
-  const update = {};
-  for (const field of ['title', 'content', 'tags']) {
-    if (req.body[field] !== undefined) update[field] = req.body[field];
-  }
-  if (update.content !== undefined) {
-    Object.assign(update, calculateWordStats(update.content));
+  // Only title, content and tags can change; anything else in the body
+  // (owner, mediaFiles, ...) was stripped by updateNoteBody.
+  const { title, content, tags } = req.valid.body;
+  const note = req.note; // ownership-checked by loadOwnedNote
+
+  if (title !== undefined) note.title = title;
+  if (tags !== undefined) note.tags = tags;
+  if (content !== undefined) {
+    note.content = content;
+    Object.assign(note, calculateWordStats(content));
+    // Same auto-tagging as on create, so a #hashtag added while editing
+    // becomes a tag too.
+    note.tags = mergeTags(note.tags, content);
   }
 
-  const note = await Note.findOneAndUpdate(
-    { _id: req.params.id, owner: req.user.id },
-    update,
-    { new: true, runValidators: true }
-  );
-  if (!note) {
-    return res.status(404).json({ message: 'Note not found' });
-  }
+  await note.save();
   res.status(200).json(note);
 };
 
 const deleteNote = async (req, res) => {
   const note = await Note.findOneAndDelete({ _id: req.params.id, owner: req.user.id });
   if (!note) {
-    return res.status(404).json({ message: 'Note not found' });
+    throw notFound('Note');
   }
 
   // Don't leave dangling references in collections or orphaned files on disk.
@@ -305,12 +273,12 @@ const getNotesStats = async (req, res) => {
 
 const uploadMedia = async (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
+    throw validationError([{ field: 'body.media', message: 'A file is required' }]);
   }
 
   // req.note was ownership-checked by loadOwnedNote before multer stored the file
   req.note.mediaFiles.push({
-    filename: req.file.originalname,
+    filename: req.file.originalname.slice(0, 255),
     path: `/${req.file.filename}`,
     type: req.file.mimetype.split('/')[0] // 'image', 'application', etc.
   });
@@ -323,10 +291,10 @@ const uploadMedia = async (req, res) => {
 // as a download so an uploaded file cannot run script on the API's origin.
 const INLINE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.pdf', '.txt']);
 
-const getFile = (req, res) => {
+const getFile = (req, res, next) => {
   const file = req.note.mediaFiles.id(req.params.fileId);
   if (!file) {
-    return res.status(404).json({ message: 'File not found' });
+    throw notFound('File');
   }
 
   if (!INLINE_EXTENSIONS.has(path.extname(file.path).toLowerCase())) {
@@ -335,17 +303,17 @@ const getFile = (req, res) => {
   res.set('X-Content-Type-Options', 'nosniff');
 
   res.sendFile(resolveUploadPath(file), (err) => {
-    if (!err || res.headersSent) return;
+    if (!err) return;
     // The record exists but the file is gone from disk (e.g. host restarted
     // with an ephemeral filesystem).
-    res.status(404).json({ message: 'File not found' });
+    next(err.code === 'ENOENT' ? notFound('File') : err);
   });
 };
 
 const deleteFile = async (req, res) => {
   const file = req.note.mediaFiles.id(req.params.fileId);
   if (!file) {
-    return res.status(404).json({ message: 'File not found' });
+    throw notFound('File');
   }
 
   await removeUploadedFile(file);

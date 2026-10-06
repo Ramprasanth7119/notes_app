@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { app, createCollection, createNote, Note, signUp } from './helpers.js';
+import { app, createCollection, createNote, errorFields, expectError, Note, signUp } from './helpers.js';
 
 // GET /api/notes/search runs real MongoDB $text queries against the
 // in-memory server; nothing here is filtered in JavaScript.
@@ -119,8 +119,7 @@ describe('filters', () => {
 
   it('returns 404 for a collection id that is not one of the user\'s collections', async () => {
     const res = await search(alice.agent, { collection: new mongoose.Types.ObjectId().toString() });
-    expect(res.status).toBe(404);
-    expect(res.body).toEqual({ message: 'Collection not found' });
+    expectError(res, 404, 'NOT_FOUND', 'Collection not found');
   });
 });
 
@@ -178,21 +177,24 @@ describe('pagination', () => {
   });
 
   it.each([
-    ['page=0', { page: '0' }, /page must be/],
-    ['negative page', { page: '-1' }, /page must be/],
-    ['non-numeric page', { page: 'abc' }, /page must be/],
-    ['fractional page', { page: '1.5' }, /page must be/],
-    ['huge page', { page: '99999999999999999999' }, /page must be/],
-    ['limit=0', { limit: '0' }, /limit must be/],
-    ['limit above 50', { limit: '51' }, /limit must be/],
-    ['massive limit', { limit: '100000' }, /limit must be/],
-    ['repeated q', { q: ['a', 'b'] }, /only once/],
-    ['overlong q', { q: 'x'.repeat(201) }, /at most 200/],
-    ['malformed collection id', { collection: 'nope' }, /valid id/]
-  ])('rejects %s with 400', async (_label, query, message) => {
+    ['page=0', { page: '0' }, 'query.page', /whole number from 1 to 10000/],
+    ['negative page', { page: '-1' }, 'query.page', /whole number/],
+    ['non-numeric page', { page: 'abc' }, 'query.page', /whole number/],
+    ['fractional page', { page: '1.5' }, 'query.page', /whole number/],
+    ['exponent page', { page: '1e3' }, 'query.page', /whole number/],
+    ['hex limit', { limit: '0x10' }, 'query.limit', /whole number/],
+    ['huge page', { page: '99999999999999999999' }, 'query.page', /whole number/],
+    ['limit=0', { limit: '0' }, 'query.limit', /whole number from 1 to 50/],
+    ['limit above 50', { limit: '51' }, 'query.limit', /whole number from 1 to 50/],
+    ['massive limit', { limit: '100000' }, 'query.limit', /whole number from 1 to 50/],
+    ['repeated q', { q: ['a', 'b'] }, 'query.q', /once/],
+    ['overlong q', { q: 'x'.repeat(201) }, 'query.q', /at most 200/],
+    ['malformed collection id', { collection: 'nope' }, 'query.collection', /valid id/]
+  ])('rejects %s with 400', async (_label, query, field, message) => {
     const res = await search(alice.agent, query);
-    expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(message);
+    expectError(res, 400, 'VALIDATION_ERROR');
+    expect(errorFields(res)).toEqual([field]);
+    expect(res.body.error.details[0].message).toMatch(message);
   });
 
   it('allows the maximum limit of 50', async () => {

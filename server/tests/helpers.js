@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module';
 import request from 'supertest';
+import { expect } from 'vitest';
 
 // The server is CommonJS. Loading it through Node's require (instead of a
 // Vitest `import`) keeps one shared module cache, so each Mongoose model is
@@ -38,3 +39,17 @@ export async function createCollection(agent, fields = {}) {
   }
   return res.body;
 }
+
+// Asserts the unified error shape: { success: false, error: { code, message, details? } }
+export function expectError(res, status, code, message) {
+  expect(res.status).toBe(status);
+  expect(res.body.success).toBe(false);
+  expect(res.body.error.code).toBe(code);
+  expect(typeof res.body.error.message).toBe('string');
+  if (message !== undefined) {
+    expect(res.body.error.message).toMatch(message);
+  }
+}
+
+// The `field` values of a VALIDATION_ERROR response, e.g. ['body.email'].
+export const errorFields = (res) => res.body.error.details.map((detail) => detail.field);

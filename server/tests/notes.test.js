@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Note, signUp } from './helpers.js';
+import { expectError, Note, signUp } from './helpers.js';
 
 let alice;
 
@@ -37,15 +37,15 @@ describe('bad input', () => {
       .set('Content-Type', 'application/json')
       .send('{"content": ');
 
-    expect(res.status).toBe(400);
+    expectError(res, 400, 'INVALID_JSON');
   });
 
   it('returns 400, not 500, when a field has the wrong type', async () => {
     const note = (await alice.agent.post('/api/notes').send({ title: 'T', content: 'C' })).body.data;
     const res = await alice.agent.put(`/api/notes/${note._id}`).send({ title: { $gt: '' } });
 
-    expect(res.status).toBe(400);
-    expect(res.body).toEqual({ message: 'Invalid request data' });
+    expectError(res, 400, 'VALIDATION_ERROR');
+    expect(res.body.error.details).toEqual([{ field: 'body.title', message: expect.any(String) }]);
     expect((await Note.findById(note._id).lean()).title).toBe('T');
   });
 });

@@ -22,7 +22,8 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.15.1",
     "multer": "^2.0.1",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "mongodb-memory-server-core": "^11.3.0",

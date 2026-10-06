@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const requireAuth = require('../middleware/requireAuth');
+const { validate } = require('../middleware/validate');
+const { registerBody, loginBody } = require('../validation/auth');
 const { register, login, logout, me } = require('../controllers/authController');
 
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', validate({ body: registerBody }), register);
+router.post('/login', validate({ body: loginBody }), login);
 router.post('/logout', logout);
 router.get('/me', requireAuth, me);
 

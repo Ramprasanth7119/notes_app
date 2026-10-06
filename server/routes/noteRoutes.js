@@ -1,23 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const config = require('../config/env');
 const requireAuth = require('../middleware/requireAuth');
 const loadOwnedNote = require('../middleware/loadOwnedNote');
-const rejectInvalidId = require('../middleware/rejectInvalidId');
-
-const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    cb(null, config.uploadDir);
-  },
-  filename: function(req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ storage: storage });
+const { upload } = require('../middleware/upload');
+const { validate, validateParam } = require('../middleware/validate');
+const { objectId } = require('../validation/common');
+const { createNoteBody, updateNoteBody, searchQuery, monthParam, isoDate } = require('../validation/notes');
 
 const {
   createNote,
@@ -36,17 +24,20 @@ const {
 } = require('../controllers/noteController');
 
 router.use(requireAuth);
-router.param('id', rejectInvalidId('Note'));
-router.param('fileId', rejectInvalidId('File'));
+// Path parameters are checked once here for every route that uses them.
+router.param('id', validateParam(objectId));
+router.param('fileId', validateParam(objectId));
+router.param('month', validateParam(monthParam));
+router.param('date', validateParam(isoDate));
 
-router.post('/', createNote);
+router.post('/', validate({ body: createNoteBody }), createNote);
 router.get('/', getAllNotes);
 router.get('/month/:month', getNotesByMonth);
 router.get('/date/:date', getNoteByDate);
-router.get('/search', searchNotes);
+router.get('/search', validate({ query: searchQuery }), searchNotes);
 router.get('/stats', getNotesStats);
 router.get('/:id', loadOwnedNote, getNote);
-router.put('/:id', updateNote);
+router.put('/:id', validate({ body: updateNoteBody }), loadOwnedNote, updateNote);
 router.delete('/:id', deleteNote);
 router.patch('/:id/pin', loadOwnedNote, pinNote);
 // Ownership is checked before multer runs, so a request for someone else's

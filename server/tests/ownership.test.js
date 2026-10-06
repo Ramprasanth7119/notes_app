@@ -2,7 +2,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import mongoose from 'mongoose';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { assignOrphansTo, Collection, createCollection, createNote, Note, signUp } from './helpers.js';
+import {
+  assignOrphansTo,
+  Collection,
+  createCollection,
+  createNote,
+  errorFields,
+  expectError,
+  Note,
+  signUp
+} from './helpers.js';
 
 // Alice owns the resources; Bob is a second, fully authenticated user who
 // tries to reach them. Every foreign access must look exactly like a missing
@@ -39,9 +48,8 @@ describe('notes', () => {
     const foreign = await bob.agent.get(`/api/notes/${note._id}`);
     const missing = await bob.agent.get(`/api/notes/${missingId()}`);
 
-    expect(foreign.status).toBe(404);
+    expectError(foreign, 404, 'NOT_FOUND', 'Note not found');
     expect(foreign.body).toEqual(missing.body);
-    expect(foreign.body).toEqual({ message: 'Note not found' });
   });
 
   it('Bob cannot update Alice\'s note', async () => {
@@ -104,10 +112,10 @@ describe('notes', () => {
     expect(await Note.findById(note._id)).toBeNull();
   });
 
-  it('treats a malformed id as not found instead of a server error', async () => {
+  it('rejects a malformed id with 400 instead of a server error', async () => {
     const res = await alice.agent.get('/api/notes/not-an-id');
-    expect(res.status).toBe(404);
-    expect(res.body).toEqual({ message: 'Note not found' });
+    expectError(res, 400, 'VALIDATION_ERROR');
+    expect(errorFields(res)).toEqual(['params.id']);
   });
 });
 
@@ -175,8 +183,7 @@ describe('collections', () => {
 
   it('Bob cannot read Alice\'s collection, and his list does not include it', async () => {
     const foreign = await bob.agent.get(`/api/collections/${collection._id}`);
-    expect(foreign.status).toBe(404);
-    expect(foreign.body).toEqual({ message: 'Collection not found' });
+    expectError(foreign, 404, 'NOT_FOUND', 'Collection not found');
 
     const list = await bob.agent.get('/api/collections');
     expect(list.body).toEqual([]);
@@ -199,8 +206,7 @@ describe('collections', () => {
     const bobCollection = await createCollection(bob.agent, { name: 'Bob stuff' });
     const res = await bob.agent.post(`/api/collections/${bobCollection._id}/notes`).send({ noteId: aliceNote._id });
 
-    expect(res.status).toBe(404);
-    expect(res.body).toEqual({ message: 'Note not found' });
+    expectError(res, 404, 'NOT_FOUND', 'Note not found');
     const stored = await Collection.findById(bobCollection._id).lean();
     expect(stored.notes).toEqual([]);
   });

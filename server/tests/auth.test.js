@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { app, Note, signUp, User } from './helpers.js';
+import { app, errorFields, expectError, Note, signUp, User } from './helpers.js';
 
 const EMAIL = 'alice@example.com';
 const PASSWORD = 'correct horse battery';
@@ -41,25 +41,25 @@ describe('POST /api/auth/register', () => {
       .post('/api/auth/register')
       .send({ email: '  ALICE@Example.com ', password: 'another password' });
 
-    expect(res.status).toBe(409);
-    expect(res.body.message).toMatch(/already exists/);
+    expectError(res, 409, 'CONFLICT', /already exists/);
     expect(authCookie(res)).toBeUndefined();
     expect(await User.countDocuments()).toBe(1);
   });
 
   it.each([
-    ['missing email', { password: PASSWORD }, /required/],
-    ['missing password', { email: EMAIL }, /required/],
-    ['empty body', {}, /required/],
-    ['non-string password', { email: EMAIL, password: 12345678 }, /required/],
-    ['invalid email', { email: 'not-an-email', password: PASSWORD }, /not valid/],
-    ['short password', { email: EMAIL, password: 'short' }, /at least 8/],
-    ['password over 72 bytes', { email: EMAIL, password: 'é'.repeat(37) }, /at most 72 bytes/]
-  ])('rejects %s with 400 and creates nothing', async (_label, body, message) => {
+    ['missing email', { password: PASSWORD }, [['body.email', /Email is required/]]],
+    ['missing password', { email: EMAIL }, [['body.password', /Password is required/]]],
+    ['empty body', {}, [['body.email', /required/], ['body.password', /required/]]],
+    ['non-string password', { email: EMAIL, password: 12345678 }, [['body.password', /Password is required/]]],
+    ['invalid email', { email: 'not-an-email', password: PASSWORD }, [['body.email', /not valid/]]],
+    ['short password', { email: EMAIL, password: 'short' }, [['body.password', /at least 8/]]],
+    ['password over 72 bytes', { email: EMAIL, password: 'é'.repeat(37) }, [['body.password', /at most 72 bytes/]]]
+  ])('rejects %s with 400 and creates nothing', async (_label, body, expected) => {
     const res = await request(app).post('/api/auth/register').send(body);
 
-    expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(message);
+    expectError(res, 400, 'VALIDATION_ERROR', 'Request validation failed');
+    expect(errorFields(res)).toEqual(expected.map(([field]) => field));
+    expected.forEach(([, message], i) => expect(res.body.error.details[i].message).toMatch(message));
     expect(authCookie(res)).toBeUndefined();
     expect(await User.countDocuments()).toBe(0);
   });
@@ -83,26 +83,24 @@ describe('POST /api/auth/login', () => {
     await signUp(EMAIL, PASSWORD);
     const res = await request(app).post('/api/auth/login').send({ email: EMAIL, password: 'wrong password' });
 
-    expect(res.status).toBe(401);
-    expect(res.body.message).toBe('Invalid email or password');
+    expectError(res, 401, 'INVALID_CREDENTIALS', 'Invalid email or password');
     expect(authCookie(res)).toBeUndefined();
   });
 
   it('gives an unknown email the same response as a wrong password', async () => {
     const res = await request(app).post('/api/auth/login').send({ email: 'nobody@example.com', password: PASSWORD });
 
-    expect(res.status).toBe(401);
-    expect(res.body.message).toBe('Invalid email or password');
+    expectError(res, 401, 'INVALID_CREDENTIALS', 'Invalid email or password');
   });
 
   it.each([
-    ['missing password', { email: EMAIL }],
-    ['missing email', { password: PASSWORD }],
-    ['empty body', {}]
-  ])('rejects %s with 400', async (_label, body) => {
+    ['missing password', { email: EMAIL }, ['body.password']],
+    ['missing email', { password: PASSWORD }, ['body.email']],
+    ['empty body', {}, ['body.email', 'body.password']]
+  ])('rejects %s with 400', async (_label, body, fields) => {
     const res = await request(app).post('/api/auth/login').send(body);
-    expect(res.status).toBe(400);
-    expect(res.body.message).toMatch(/required/);
+    expectError(res, 400, 'VALIDATION_ERROR');
+    expect(errorFields(res)).toEqual(fields);
   });
 });
 
@@ -119,8 +117,7 @@ describe('session cookie', () => {
     'rejects GET %s without a cookie',
     async (url) => {
       const res = await request(app).get(url);
-      expect(res.status).toBe(401);
-      expect(res.body.message).toBe('Authentication required');
+      expectError(res, 401, 'UNAUTHENTICATED', 'Authentication required');
     }
   );
 
@@ -135,8 +132,7 @@ describe('session cookie', () => {
     const forged = jwt.sign({ sub: user.id }, 'attacker-secret');
     const res = await request(app).get('/api/auth/me').set('Cookie', `token=${forged}`);
 
-    expect(res.status).toBe(401);
-    expect(res.body.message).toMatch(/invalid or has expired/);
+    expectError(res, 401, 'UNAUTHENTICATED', /invalid or has expired/);
   });
 
   it('rejects an expired token', async () => {
