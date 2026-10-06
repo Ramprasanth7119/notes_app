@@ -5,6 +5,7 @@ const Note = require('../models/Note');
 const Collection = require('../models/Collection');
 const config = require('../config/env');
 const { extractHashtags } = require('../utils/hashtags');
+const { isObjectId } = require('../utils/objectId');
 
 // Every query in this file includes `owner: req.user.id`. req.user is set by
 // requireAuth from the verified JWT, so a client cannot read or change another
@@ -120,20 +121,79 @@ const getNoteByDate = async (req, res) => {
   res.status(200).json(note);
 };
 
-const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const SEARCH_DEFAULT_LIMIT = 10;
+const SEARCH_MAX_LIMIT = 50;
+// Deep pages get slower with skip(); nobody pages this far through notes.
+const SEARCH_MAX_PAGE = 10000;
+const SEARCH_MAX_QUERY_LENGTH = 200;
 
+// Returns the integer, the fallback when the param is absent, or null when
+// the value is not a whole number in [1, max].
+const parseBoundedInt = (raw, fallback, max) => {
+  if (raw === undefined) return fallback;
+  if (typeof raw !== 'string' || !/^\d+$/.test(raw)) return null;
+  const value = Number(raw);
+  return value >= 1 && value <= max ? value : null;
+};
+
+// GET /api/notes/search?q=&tag=&collection=&page=&limit=
+// All filters are optional and combine with AND. Without q it lists the
+// user's notes (pinned first, newest first), so the same endpoint serves
+// "search" and "browse with filters".
 const searchNotes = async (req, res) => {
-  const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
-  if (!q) {
-    return res.status(200).json([]);
+  const { q = '', tag = '', collection = '' } = req.query;
+  // ?q=a&q=b arrives as an array; only plain strings are accepted.
+  if ([q, tag, collection].some((value) => typeof value !== 'string')) {
+    return res.status(400).json({ message: 'q, tag and collection may each be given only once' });
   }
 
-  const pattern = { $regex: escapeRegex(q), $options: 'i' };
-  const notes = await Note.find({
-    owner: req.user.id,
-    $or: [{ title: pattern }, { content: pattern }, { tags: pattern }]
+  const text = q.trim();
+  if (text.length > SEARCH_MAX_QUERY_LENGTH) {
+    return res.status(400).json({ message: `q must be at most ${SEARCH_MAX_QUERY_LENGTH} characters` });
+  }
+  const page = parseBoundedInt(req.query.page, 1, SEARCH_MAX_PAGE);
+  if (page === null) {
+    return res.status(400).json({ message: `page must be a whole number from 1 to ${SEARCH_MAX_PAGE}` });
+  }
+  const limit = parseBoundedInt(req.query.limit, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT);
+  if (limit === null) {
+    return res.status(400).json({ message: `limit must be a whole number from 1 to ${SEARCH_MAX_LIMIT}` });
+  }
+  if (collection && !isObjectId(collection)) {
+    return res.status(400).json({ message: 'collection must be a valid id' });
+  }
+
+  // owner comes first and is always present: a user can only ever search
+  // their own notes, and the text index requires it (see models/Note.js).
+  const filter = { owner: req.user.id };
+  if (text) filter.$text = { $search: text };
+  if (tag.trim()) filter.tags = tag.trim();
+  if (collection) {
+    // Filtering by someone else's collection is reported like a missing one.
+    const found = await Collection.findOne({ _id: collection, owner: req.user.id }, 'notes').lean();
+    if (!found) {
+      return res.status(404).json({ message: 'Collection not found' });
+    }
+    filter._id = { $in: found.notes };
+  }
+
+  // _id is the tie-breaker, so pages don't overlap when sort keys are equal.
+  const sort = text
+    ? { score: { $meta: 'textScore' }, _id: 1 }
+    : { pinned: -1, updatedAt: -1, _id: -1 };
+
+  const [results, total] = await Promise.all([
+    Note.find(filter).sort(sort).skip((page - 1) * limit).limit(limit),
+    Note.countDocuments(filter)
+  ]);
+
+  res.status(200).json({
+    results,
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit)
   });
-  res.status(200).json(notes);
 };
 
 const updateNote = async (req, res) => {

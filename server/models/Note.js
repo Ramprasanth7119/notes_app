@@ -31,4 +31,14 @@ const noteSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Full-text search over title and content (GET /api/notes/search).
+// `owner` is an equality prefix, so MongoDB requires every $text query on this
+// index to also match one owner: user scoping is enforced by the index itself,
+// and each search only scans that user's index entries. A collection can have
+// only one text index. Title matches rank higher than content matches.
+noteSchema.index(
+  { owner: 1, title: 'text', content: 'text' },
+  { name: 'note_text_search', weights: { title: 5, content: 1 } }
+);
+
 module.exports = mongoose.model('Note', noteSchema);

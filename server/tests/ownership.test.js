@@ -70,7 +70,8 @@ describe('notes', () => {
 
     const search = await bob.agent.get('/api/notes/search').query({ q: 'secret' });
     expect(search.status).toBe(200);
-    expect(search.body).toEqual([]);
+    expect(search.body.results).toEqual([]);
+    expect(search.body.total).toBe(0);
 
     expect((await bob.agent.get(`/api/notes/date/${note.date}`)).status).toBe(404);
     expect((await bob.agent.get(`/api/notes/month/${note.month}`)).body).toEqual([]);
@@ -94,7 +95,7 @@ describe('notes', () => {
     expect(pinned.body.pinned).toBe(true);
 
     const search = await alice.agent.get('/api/notes/search').query({ q: 'secret' });
-    expect(search.body.map((n) => n._id)).toEqual([note._id]);
+    expect(search.body.results.map((n) => n._id)).toEqual([note._id]);
 
     const stats = await alice.agent.get('/api/notes/stats');
     expect(stats.body.tagStats).toEqual([{ _id: 'private', count: 1 }]);
