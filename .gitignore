@@ -1,4 +1,18 @@
-# ...existing entries...
-/server/uploads/*
-!server/uploads/.gitkeep
+# Dependencies
 node_modules/
+
+# Environment files (copy server/.env.example to server/.env)
+.env
+.env.*
+!.env.example
+
+# Build and test output
+client/dist/
+server/coverage/
+
+# Files uploaded at runtime
+server/uploads/
+
+# OS and editor files
+.DS_Store
+Thumbs.db

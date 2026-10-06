@@ -17,6 +17,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['app.js', 'config/**', 'controllers/**', 'middleware/**', 'models/**', 'routes/**', 'scripts/**', 'utils/**', 'validation/**'],
+      // The benchmark is a developer tool, not application code.
+      exclude: ['scripts/benchmarkSearch.js'],
       reporter: ['text-summary', 'text']
     },
     testTimeout: 20000,
