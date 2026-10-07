@@ -10,7 +10,7 @@ Each user signs up, writes markdown notes, groups them into collections, attache
 
 - **Frontend:** React 19 + Vite, hosted on Vercel
 - **Backend:** Express 5 + Mongoose 8 on MongoDB, hosted on Render
-- **Quality:** 171 backend integration tests against a real (in-memory) MongoDB, run in GitHub Actions
+- **Quality:** 177 backend integration tests against a real (in-memory) MongoDB, run in GitHub Actions
 
 ## Features
 
@@ -70,7 +70,7 @@ server/
   app.js        Express app (imported by tests)
   index.js      connects to MongoDB and starts the server
   routes/ controllers/ middleware/ models/ validation/ utils/
-  scripts/      assignOwner.js (migration), benchmarkSearch.js
+  scripts/      assignOwner.js, copyToDatabase.js (migrations), benchmarkSearch.js
   tests/        integration tests
 ```
 
@@ -127,7 +127,7 @@ Request  ─► browser sends the cookie ─► requireAuth verifies it
 
 ```bash
 cd server
-npm test               # 171 tests
+npm test               # 177 tests
 npm run test:coverage  # with v8 coverage
 ```
 
@@ -146,6 +146,7 @@ npm run test:coverage  # with v8 coverage
 | `attachments.test.js` | upload, download headers, missing files, path traversal, delete |
 | `hashtags.test.js` | auto-tagging on create and update |
 | `security.test.js` | login rate limiting, security headers |
+| `copyToDatabase.test.js` | moving the app's data to its own database: what is copied, ids, indexes, refusing a non-empty target |
 
 CI (`.github/workflows/ci.yml`) runs the server tests with coverage, plus the client lint and build, on pushes to `main` and `feature/**` branches and on pull requests.
 
@@ -175,7 +176,8 @@ Other scripts:
 | --- | --- |
 | `server: npm test` / `npm run test:coverage` | integration tests (+ coverage) |
 | `server: npm run bench:search` | local search benchmark (see `PROJECT_METRICS.md`) |
-| `server: npm run migrate:assign-owner -- --email you@example.com [--apply]` | assign pre-auth notes and collections to one account (dry run without `--apply`) |
+| `server: npm run migrate:assign-owner -- --email you@example.com [--apply]` | assign pre-auth notes and collections to one account (dry run without `--apply`; `--db <name>` picks another database) |
+| `server: npm run migrate:copy-db -- --to notes_app [--apply]` | copy this app's users, notes and collections into a new database on the same cluster (dry run without `--apply`; never deletes) |
 | `client: npm run lint` / `npm run build` | ESLint / production build |
 
 ## Environment variables
@@ -250,5 +252,6 @@ Render environment variables: `MONGO_URI`, `JWT_SECRET` (at least 32 random char
 
 Notes:
 - **Existing data:** notes and collections created before authentication have no owner, so nobody sees them until they're assigned. After registering, run `npm run migrate:assign-owner -- --email you@example.com --apply` against the production database.
+- **Own database:** give the app a database of its own (`.../notes_app?...` in `MONGO_URI`). A URI without a database name uses MongoDB's default database, which other projects on the cluster may also use, including a `users` collection. To move existing data, `npm run migrate:copy-db -- --to notes_app --apply` copies this app's data (users only if they have a password hash) into `notes_app`; then change `MONGO_URI` and redeploy.
 - **Free-tier sleep:** the Render instance sleeps when idle, so the first request can take up to a minute. The UI shows a "server may be waking up" message.
 - **Ephemeral disk:** Render's free-tier disk doesn't persist across deploys or restarts, so attachments can disappear. The API then answers 404 for the missing file. Persistent storage (a Render disk or object storage) would fix this.

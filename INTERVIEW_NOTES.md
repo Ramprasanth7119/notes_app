@@ -104,7 +104,7 @@ Files: `server/middleware/loadOwnedNote.js`, `server/controllers/*`, `server/tes
 - **Logged-in users:** a helper registers a user and returns a Supertest "agent" that keeps the cookie, like a logged-in browser. Most tests use two such users, Alice and Bob.
 - **What each test checks:** the status code, the response body, and what actually changed in MongoDB or on disk.
   - Example: when Bob tries to update Alice's note, the test checks for a 404 *and* that the note in the database is unchanged.
-- **The suite:** 171 tests in 9 files, covering auth, ownership, CRUD, search, validation, errors, attachments, hashtags and security. 91% line coverage. GitHub Actions runs it on pushes to `main` and feature branches and on pull requests.
+- **The suite:** 177 tests in 10 files, covering auth, ownership, CRUD, search, validation, errors, attachments, hashtags, security and the database-move migration. 87% line coverage. GitHub Actions runs it on pushes to `main` and feature branches and on pull requests.
 - **Checking the tests themselves:** I deliberately broke the ownership filter and the search filters to confirm the tests fail when they should.
 
 ### 12. Why mongodb-memory-server is useful
@@ -145,6 +145,10 @@ Files: `server/middleware/loadOwnedNote.js`, `server/controllers/*`, `server/tes
 - **Old data from before accounts existed:**
   - It has no owner, so nobody sees it.
   - It isn't deleted. A migration script (`npm run migrate:assign-owner`) assigns it to one account, as a dry run unless `--apply` is passed.
+- **A production bug after launch:**
+  - Render logs showed a 500 on login: `bcrypt.compare` threw "data and hash arguments required".
+  - The user record it found had no `passwordHash`, so this app never wrote it: the database was shared with another project that also has a `users` collection.
+  - Fix: such a record is treated like an unknown email (401, same timing), with a test that writes one straight to MongoDB. A second script moves the app's data into its own `notes_app` database.
 
 ### 16. One technical challenge and how it was solved
 

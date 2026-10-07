@@ -12,6 +12,7 @@ export const User = require('../models/User');
 export const Note = require('../models/Note');
 export const Collection = require('../models/Collection');
 export const { assignOrphansTo } = require('../scripts/assignOwner');
+export const { planCopy, copyAppData } = require('../scripts/copyToDatabase');
 
 // Registers a user and returns a supertest agent that keeps the auth cookie,
 // i.e. behaves like a logged-in browser.

@@ -6,6 +6,8 @@
 //
 //   node scripts/assignOwner.js --email you@example.com           # dry run
 //   node scripts/assignOwner.js --email you@example.com --apply   # write
+//
+// Add --db <name> to use a different database than the one in MONGO_URI.
 
 const mongoose = require('mongoose');
 const Note = require('../models/Note');
@@ -34,15 +36,18 @@ const main = async () => {
   const emailIndex = args.indexOf('--email');
   const email = emailIndex !== -1 ? args[emailIndex + 1]?.toLowerCase() : undefined;
   const apply = args.includes('--apply');
+  const dbIndex = args.indexOf('--db');
+  const dbName = dbIndex !== -1 ? args[dbIndex + 1] : undefined;
 
   if (!email) {
-    console.error('Usage: node scripts/assignOwner.js --email <registered email> [--apply]');
+    console.error('Usage: node scripts/assignOwner.js --email <registered email> [--db <name>] [--apply]');
     process.exitCode = 1;
     return;
   }
 
-  await connectDB(process.env.MONGO_URI);
+  await connectDB(process.env.MONGO_URI, dbName ? { dbName } : {});
   try {
+    console.log(`Database: ${mongoose.connection.name}`);
     const user = await User.findOne({ email });
     if (!user) {
       console.error(`No user with email ${email}. Register the account first.`);

@@ -7,6 +7,7 @@
     "start": "node index.js",
     "test:watch": "vitest",
     "migrate:assign-owner": "node scripts/assignOwner.js",
+    "migrate:copy-db": "node scripts/copyToDatabase.js",
     "test:coverage": "vitest run --coverage",
     "dev": "nodemon index.js",
     "bench:search": "node scripts/benchmarkSearch.js"

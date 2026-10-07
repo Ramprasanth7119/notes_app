@@ -25,17 +25,17 @@ Before this work the API had 17 routes (13 notes, 4 collections).
 
 | Metric | Value |
 | --- | --- |
-| Test cases | **171** (118 `it` blocks; table-driven `it.each` cases are counted individually) |
-| Passing | 171 |
+| Test cases | **177** (124 `it` blocks; table-driven `it.each` cases are counted individually) |
+| Passing | 177 |
 | Failing | 0 |
-| Test files (suites) | 9 |
-| Line coverage | 91.15% (474 / 520 lines) |
-| Statement coverage | 91.07% |
-| Branch coverage | 82.87% |
-| Function coverage | 93.24% |
+| Test files (suites) | 10 |
+| Line coverage | 86.53% (514 / 594 lines) |
+| Statement coverage | 86.56% |
+| Branch coverage | 75.42% |
+| Function coverage | 90% |
 
-- **What coverage measures:** `app.js`, `config`, `controllers`, `middleware`, `models`, `routes`, `utils`, `validation` and the migration script. The benchmark script is excluded.
-- **What's uncovered:** mostly `config/db.js` (only used by `index.js`), production-only config branches, and the migration script's command-line wrapper (its core function is tested).
+- **What coverage measures:** `app.js`, `config`, `controllers`, `middleware`, `models`, `routes`, `utils`, `validation` and the two migration scripts. The benchmark script is excluded.
+- **What's uncovered:** mostly `config/db.js` (only used by `index.js`), production-only config branches, and the migration scripts' command-line wrappers (their core functions are tested, and the wrappers were run by hand against a local MongoDB). Adding `copyToDatabase.js` lowered line coverage from 91.15% to 86.53% for that reason.
 - **Database:** tests run against a real MongoDB 8.2.6 started by mongodb-memory-server. Nothing is mocked except one test that forces a database error to check the 500 response.
 
 **Browser QA (local, not part of the committed suite):**
