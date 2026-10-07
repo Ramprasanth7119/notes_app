@@ -93,6 +93,15 @@ describe('POST /api/auth/login', () => {
     expectError(res, 401, 'INVALID_CREDENTIALS', 'Invalid email or password');
   });
 
+  it('rejects a stored user without a password hash with 401, not 500', async () => {
+    // Written straight to MongoDB, as another app sharing the database would.
+    await User.collection.insertOne({ email: EMAIL, password: 'plain text from another app' });
+    const res = await request(app).post('/api/auth/login').send({ email: EMAIL, password: PASSWORD });
+
+    expectError(res, 401, 'INVALID_CREDENTIALS', 'Invalid email or password');
+    expect(authCookie(res)).toBeUndefined();
+  });
+
   it.each([
     ['missing password', { email: EMAIL }, ['body.password']],
     ['missing email', { password: PASSWORD }, ['body.email']],

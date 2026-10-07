@@ -41,9 +41,13 @@ const login = async (req, res) => {
   const { email, password } = req.valid.body;
 
   const user = await User.findOne({ email }).select('+passwordHash');
-  const passwordMatches = await bcrypt.compare(password, user ? user.passwordHash : DUMMY_HASH);
+  // A user document without a hash was not written by this app (for example a
+  // `users` collection shared with another app in the same database). Treat it
+  // like an unknown email instead of letting bcrypt throw a 500.
+  const hasHash = typeof user?.passwordHash === 'string';
+  const passwordMatches = await bcrypt.compare(password, hasHash ? user.passwordHash : DUMMY_HASH);
 
-  if (!user || !passwordMatches) {
+  if (!hasHash || !passwordMatches) {
     throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password');
   }
 
